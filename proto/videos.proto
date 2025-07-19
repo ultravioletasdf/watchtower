@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+option go_package = "videoapp/proto";
+
+package videos;
+
+service Videos {
+    rpc CreateUpload(CreateUploadRequest) returns (CreateUploadResponse){}
+    rpc Create(CreateVideoRequest) returns (CreateVideoResponse) {}
+}
+message CreateUploadRequest {
+    string session = 1;
+}
+message CreateUploadResponse {
+    int64 id = 1;
+    string url = 2;
+    map<string, string> formData = 3;
+}
+message CreateVideoRequest {
+    string session = 1;
+    int64 upload_id = 2;
+    string title = 3;
+    string description = 4;
+    int64 visibility = 5;
+}
+message CreateVideoResponse {
+    int64 id = 1;
+}

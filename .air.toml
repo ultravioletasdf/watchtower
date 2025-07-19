@@ -1,0 +1,16 @@
+#:schema https://github.com/SchemaStore/schemastore/raw/0890a3e1872731b569e66903f32abe669a970b8a/src/schemas/json/air-verse-air.json
+[build]
+pre_cmd = ["sqlc generate", "make migrate/dev", "make gen/proto"]
+cmd = "cd server && go build -o ../tmp/main ."
+
+exclude_dir = [
+    "tmp",
+    "testdata",
+    "migrations",
+    "clients",
+    "node_modules",
+    "video_analyser",
+]
+exclude_file = []
+exclude_regex = ["_test.go", "_templ.go", "sql\\/.*\\.go", ".pb.go"]
+include_ext = ["go", "sql", "proto"]

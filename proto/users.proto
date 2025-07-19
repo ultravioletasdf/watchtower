@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+option go_package = "videoapp/proto";
+
+package users;
+
+service Users {
+  rpc Create(CreateRequest) returns (CreateResponse) {}
+  rpc Verify(VerifyRequest) returns (Empty) {}
+}
+message Empty {}
+message CreateRequest {
+    string email = 1;
+    string username = 2;
+    string password = 3;
+}
+message CreateResponse {
+    uint64 id = 1;
+}
+message VerifyRequest {
+  string session = 1;
+  int32 code = 2;
+}
+
+service Sessions {
+  rpc Create(Crededentials) returns (Session){}
+  rpc GetUser(Session) returns (User){}
+  rpc Delete(Session) returns (Empty){}
+}
+message User {
+  int64 id = 1;
+  string email = 2;
+  string username = 3;
+  int64 created_at = 4;
+  uint64 flags = 5;
+}
+message Crededentials {
+  string email = 1;
+  string password = 2;
+}
+message Session {
+  string token = 1;
+}

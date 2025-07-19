@@ -1,0 +1,28 @@
+{
+  "identities": [
+     {
+      "name": "admin",
+      "credentials": [
+        {
+          "accessKey": "P7HJRXWE0RWART88DYM5",
+          "secretKey": "MGssEh696trEYq0CnqFSzI71d9DnRDK0IhGAwQbt"
+        }
+      ],
+      "actions": [
+        "Admin",
+        "Read",
+        "ReadAcp",
+        "List",
+        "Tagging",
+        "Write",
+        "WriteAcp"
+      ]
+    }
+],
+  "cors": {
+    "enabled": true,
+    "origins": ["*"],
+    "methods": ["GET", "PUT", "POST"],
+    "headers": ["*"]
+  }
+}

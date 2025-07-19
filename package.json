@@ -1,0 +1,19 @@
+{
+  "name": "watchtower-protos",
+  "dependencies": {
+    "@grpc/grpc-js": "^1.13.4",
+    "google-protobuf": "^3.21.4"
+  },
+  "trustedDependencies": [
+    "protobufjs"
+  ],
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

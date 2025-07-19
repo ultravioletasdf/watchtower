@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+option go_package = "videoapp/proto";
+
+message AnalyseVideoMessage {
+    int64 upload_id = 1;
+    int64 video_id = 2;
+}

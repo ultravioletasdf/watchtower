@@ -1,0 +1,8 @@
+proto/*.pb.go
+proto/*.ts
+sql/*.go
+*.db
+tmp
+.vscode
+node_modules
+video_analyser/videos
