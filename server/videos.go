@@ -62,7 +62,7 @@ func (s *videoService) CreateUpload(ctx context.Context, req *proto.CreateUpload
 	return &proto.CreateUploadResponse{Url: url.String(), Id: id.Int64(), FormData: fd}, nil
 }
 
-func (s *videoService) Create(ctx context.Context, req *proto.CreateVideoRequest) (*proto.CreateVideoResponse, error) {
+func (s *videoService) Create(ctx context.Context, req *proto.VideosCreateRequest) (*proto.VideosCreateResponse, error) {
 	if len(req.Session) != SESSION_TOKEN_LENGTH {
 		return nil, ErrSessionWrongSize
 	}
@@ -98,5 +98,23 @@ func (s *videoService) Create(ctx context.Context, req *proto.CreateVideoRequest
 	if err != nil {
 		return nil, ErrInternal(err)
 	}
-	return &proto.CreateVideoResponse{Id: id.Int64()}, nil
+	return &proto.VideosCreateResponse{Id: id.Int64()}, nil
+}
+func (s *videoService) GetUserVideos(ctx context.Context, req *proto.GetUserVideosRequest) (*proto.GetUserVideosResponse, error) {
+	if len(req.Session) != SESSION_TOKEN_LENGTH {
+		return nil, ErrSessionWrongSize
+	}
+
+	res, err := executor.GetVideosFromSession(ctx, req.Session)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, ErrNoVideosFound
+	}
+	if err != nil {
+		return nil, ErrInternal(err)
+	}
+	videos := make([]*proto.GetUserVideosResponseVideo, len(res))
+	for i := range res {
+		videos[i] = &proto.GetUserVideosResponseVideo{Id: res[i].ID, Title: res[i].Title, Visibility: res[i].Visibility, CreatedAt: res[i].CreatedAt}
+	}
+	return &proto.GetUserVideosResponse{Videos: videos}, nil
 }

@@ -9,7 +9,7 @@
 
 <div class="flex flex-col">
 	<AppNav user={data.streamed?.user} />
-	<Sidebar.Provider>
+	<Sidebar.Provider class="flex-grow">
 		<AppSidebar />
 		<main class="m-8 flex-grow">
 			{@render children?.()}

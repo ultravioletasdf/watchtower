@@ -6,7 +6,8 @@ package videos;
 
 service Videos {
     rpc CreateUpload(CreateUploadRequest) returns (CreateUploadResponse){}
-    rpc Create(CreateVideoRequest) returns (CreateVideoResponse) {}
+    rpc Create(VideosCreateRequest) returns (VideosCreateResponse) {}
+    rpc GetUserVideos(GetUserVideosRequest) returns (GetUserVideosResponse) {}
 }
 message CreateUploadRequest {
     string session = 1;
@@ -14,15 +15,39 @@ message CreateUploadRequest {
 message CreateUploadResponse {
     int64 id = 1;
     string url = 2;
-    map<string, string> formData = 3;
+    map<string, string> form_data = 3;
 }
-message CreateVideoRequest {
+message VideosCreateRequest {
     string session = 1;
     int64 upload_id = 2;
     string title = 3;
     string description = 4;
     int64 visibility = 5;
 }
-message CreateVideoResponse {
+message VideosCreateResponse {
     int64 id = 1;
 }
+message GetUserVideosRequest {
+    string session = 1;
+}
+message GetUserVideosResponse {
+    repeated GetUserVideosResponseVideo videos = 1;
+}
+message GetUserVideosResponseVideo {
+    int64 id = 1;
+    string title = 2;
+    int64 visibility = 3;
+    int64 created_at = 4;
+}
+
+
+service Thumbnails {
+    rpc CreateUpload(CreateUploadRequest) returns (CreateUploadResponse){}
+    rpc Process(ThumbnailsProcessRequest) returns (ThumbnailsProcessResponse){}
+}
+
+message ThumbnailsProcessRequest {
+    string session = 1;
+    int64 id = 2;
+}
+message ThumbnailsProcessResponse {}

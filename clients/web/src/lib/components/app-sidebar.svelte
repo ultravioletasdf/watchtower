@@ -1,8 +1,6 @@
 <script lang="ts">
-	import CalendarIcon from '@lucide/svelte/icons/calendar';
 	import HouseIcon from '@lucide/svelte/icons/house';
 	import HeartIcon from '@lucide/svelte/icons/heart';
-	import SearchIcon from '@lucide/svelte/icons/search';
 	import SettingsIcon from '@lucide/svelte/icons/settings';
 	import * as Sidebar from '$lib/components/ui/sidebar/index.js';
 
@@ -10,7 +8,7 @@
 	const items = [
 		{
 			title: 'Home',
-			url: '#',
+			url: '/',
 			icon: HouseIcon
 		},
 		{
@@ -22,7 +20,7 @@
 	const footerItems = [
 		{
 			title: 'Settings',
-			url: '#',
+			url: '/settings',
 			icon: SettingsIcon
 		}
 	];

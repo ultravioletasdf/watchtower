@@ -2,6 +2,7 @@
   "name": "watchtower-protos",
   "dependencies": {
     "@grpc/grpc-js": "^1.13.4",
+    "@types/google-protobuf": "^3.15.12",
     "google-protobuf": "^3.21.4"
   },
   "trustedDependencies": [

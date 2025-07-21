@@ -8,6 +8,7 @@ export async function POST({ cookies }) {
 		);
 		return json(res.toObject());
 	} catch (e) {
+		console.log(e);
 		throw fail(400);
 	}
 }

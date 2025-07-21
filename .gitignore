@@ -6,3 +6,5 @@ tmp
 .vscode
 node_modules
 video_analyser/videos
+vips/
+.env

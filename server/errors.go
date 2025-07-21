@@ -25,6 +25,11 @@ var (
 	ErrTitleWrongSize       = status.Error(codes.InvalidArgument, "Title must be between 5 and 100 characters")
 	ErrDescriptionWrongSize = status.Error(codes.InvalidArgument, "Description must be less than 1000 characters")
 	ErrInvalidVisibility    = status.Error(codes.InvalidArgument, "Invalid visibility")
+
+	ErrNoVideosFound = status.Error(codes.NotFound, "No videos were found")
+	ErrNoUploadFound = status.Error(codes.NotFound, "That upload was not found")
+
+	ErrUnauthorized = status.Error(codes.PermissionDenied, "You do not have authorization to do that")
 )
 
 func ErrInternal(err error) error {

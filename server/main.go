@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
 	"net"
+	"os"
 
 	"videoapp/proto"
 	sqlc "videoapp/sql"
@@ -70,6 +72,7 @@ func main() {
 	proto.RegisterUsersServer(s, &userServer{})
 	proto.RegisterSessionsServer(s, &sessionServer{})
 	proto.RegisterVideosServer(s, &videoService{})
+	proto.RegisterThumbnailsServer(s, &thumbnailsServer{})
 	reflection.Register(s)
 
 	log.Printf("server listening at %v\n", lis.Addr())
@@ -91,15 +94,32 @@ func connectMinio() {
 		log.Fatalf("failed to connect to minio: %v", err)
 	}
 	minioClient = client
-	exists, err := minioClient.BucketExists(context.Background(), "staging")
-	if err != nil {
-		log.Fatalf("failed to verify bucket exists: %v", err)
-	}
-	if !exists {
-		if err := minioClient.MakeBucket(context.Background(), "staging", minio.MakeBucketOptions{}); err != nil {
-			log.Fatalf("failed to create bucket: %v", err)
+
+	buckets := []string{"staging", "thumbnails", "staging-thumbnails"}
+
+	for _, bucket := range buckets {
+		exists, err := minioClient.BucketExists(context.Background(), bucket)
+		if err != nil {
+			log.Fatalf("failed to verify bucket exists: %v", err)
 		}
-		log.Println("Created bucket staging")
+		if !exists {
+			if err := minioClient.MakeBucket(context.Background(), bucket, minio.MakeBucketOptions{}); err != nil {
+				log.Fatalf("failed to create bucket: %v", err)
+			}
+			log.Printf("Created bucket %s\n", bucket)
+		}
+		policyFile := fmt.Sprintf("policies/%s.json", bucket)
+		policy, err := os.ReadFile(policyFile)
+		if errors.Is(err, os.ErrNotExist) {
+			continue
+		}
+		if err != nil {
+			log.Fatalf("failed to get bucket policy %s: %v", policyFile, err)
+		}
+		err = minioClient.SetBucketPolicy(context.Background(), bucket, string(policy))
+		if err != nil {
+			log.Fatalf("failed to apply bucket policy %s: %v", policyFile, err)
+		}
 	}
 }
 func connectRabbit() {
