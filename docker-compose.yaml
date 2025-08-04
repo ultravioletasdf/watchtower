@@ -3,8 +3,17 @@ services:
     image: rabbitmq:management
     container_name: rabbitmq
     environment:
-      - RABBITMQ_DEFAULT_USER=eFxlf4nvqXbacGAymSLd8aiIO4KgLpPp
-      - RABBITMQ_DEFAULT_PASS=uNLAYxqT1GJlC4VbfIHSnUAhTcnyycHR
+      - RABBITMQ_LOGS=warning
+      - RABBITMQ_DEFAULT_USER=dev
+      - RABBITMQ_DEFAULT_PASS=dev
     ports:
       - "5672:5672"
       - "15672:15672"
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: dev
+    volumes:
+      - ./tmp/postgres-data:/var/lib/postgressql/data
+    ports:
+      - "5432:5432"

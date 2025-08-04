@@ -3,11 +3,12 @@ servers: []
 sql:
   - schema: "sql/schema.sql"
     queries: "sql/queries"
-    engine: "sqlite"
+    engine: postgresql
     gen:
       go:
         package: "sqlc"
         out: "sql"
+        sql_package: "pgx/v5"
 plugins: []
 rules: []
 options: {}

@@ -1,0 +1,17 @@
+package frontend
+
+templ Base() {
+	<!DOCTYPE html>
+	<html class="h-full">
+		<head>
+			<title>WatchTower</title>
+			<link rel="stylesheet" href="/assets/tailwind.css"/>
+			<script src="/assets/htmx.min.js" defer></script>
+			<script src="/assets/alpine-persist.min.js" defer></script>
+			<script src="/assets/alpine.min.js" defer></script>
+		</head>
+		<body class="h-full bg-base-100">
+			{ children... }
+		</body>
+	</html>
+}

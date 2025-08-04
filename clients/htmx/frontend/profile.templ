@@ -1,0 +1,12 @@
+package frontend
+
+import "videoapp/proto"
+
+templ Profile(videos []*proto.GetUserVideosResponseVideo) {
+	@AppLayout() {
+		Profile
+		for _, v := range videos {
+			{ v.Title }
+		}
+	}
+}

@@ -1,0 +1,72 @@
+package frontend
+
+import "github.com/dimmerz92/go-lucide-icons/pkg/templ/icons"
+
+type SignText struct {
+	Endpoint            string
+	Title               string
+	Heading             string
+	Description         string
+	Button              string
+	AskForUsername      bool
+	AskIfForgotPassword bool
+	Alternative         SignTextAlternative
+}
+type SignTextAlternative struct {
+	Description string
+	Link        Link
+}
+type Link struct {
+	Text string
+	Href string
+}
+
+templ Sign(text SignText) {
+	<title>{ text.Title }</title>
+	@Base() {
+		<div class="flex flex-col gap-1 h-full items-center justify-center">
+			WatchTower
+			<form x-data @input="$refs.error.textContent = ''" hx-post={ text.Endpoint } hx-target="#error" class="w-full max-w-[400px] bg-base-200 rounded-lg p-8 text-center flex flex-col gap-4">
+				<div>
+					<div class="text-xl font-bold">
+						{ text.Heading }
+					</div>
+					<div class="text-sm text-base-content/90">
+						{ text.Description }
+					</div>
+				</div>
+				<div class="flex flex-col gap-3">
+					<div>
+						<label class="input items-center validator w-full">
+							@icons.Mail(icons.IconProps{Class: "size-4 opacity-50"})
+							<input name="email" type="email" required class="grow" placeholder="email@example.com"/>
+						</label>
+						<div class="validator-hint hidden">Enter a valid email address</div>
+					</div>
+					if text.AskForUsername {
+						<div>
+							<label class="input items-center validator w-full">
+								@icons.UserRound(icons.IconProps{Class: "size-4 opacity-50"})
+								<input name="username" required class="grow" placeholder="Username" minlength="3" maxlength="32"/>
+							</label>
+							<div class="validator-hint hidden">Enter a valid username</div>
+						</div>
+					}
+					<div>
+						<label class="input items-center validator w-full">
+							@icons.KeyRound(icons.IconProps{Class: "size-4 opacity-50"})
+							<input name="password" type="password" required class="grow" placeholder="Password" minlength="8" maxlength="72"/>
+						</label>
+						<div class="validator-hint hidden ">Password must be between 8 and 72 characters</div>
+						if text.AskIfForgotPassword {
+							<a href="/forgotpassword" class="grow text-xs underline opacity-90 mt-1 text-right w-full block">Forgot Password?</a>
+						}
+					</div>
+				</div>
+				<button type="submit" class="btn btn-block btn-primary">{ text.Button }</button>
+				<div id="error" x-ref="error" class="text-sm text-error text-center empty:hidden"></div>
+				<div class="text-sm">{ text.Alternative.Description } <a href={ text.Alternative.Link.Href } class="text-primary underline font-semibold">{ text.Alternative.Link.Text }</a></div>
+			</form>
+		</div>
+	}
+}

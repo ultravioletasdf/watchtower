@@ -4,7 +4,7 @@ SELECT
 FROM
     users
 WHERE
-    email = ?
+    email = $1
 LIMIT
     1;
 
@@ -14,7 +14,7 @@ SELECT
 FROM
     users
 WHERE
-    username = ?
+    username = $1
 LIMIT
     1;
 
@@ -22,7 +22,7 @@ LIMIT
 INSERT INTO
     users (id, email, username, password, verify_code, verify_expire_at, created_at)
 VALUES
-    (?, ?, ?, ?, ?, ?, unixepoch ('now'));
+    ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP);
 
 -- name: GetPasswordFromEmail :one
 SELECT
@@ -30,11 +30,11 @@ SELECT
 FROM
     users
 WHERE
-    email = ?
+    email = $1
 LIMIT
     1;
 
 -- name: SetUserFlag :exec
 UPDATE users
-SET flags = ?
-WHERE id = ?;
+SET flags = $1
+WHERE id = $2;

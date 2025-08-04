@@ -1,6 +1,6 @@
 {
   "identities": [
-     {
+    {
       "name": "admin",
       "credentials": [
         {
@@ -17,8 +17,12 @@
         "Write",
         "WriteAcp"
       ]
+    },
+    {
+      "name": "anonymous",
+      "actions": ["Read:thumbnails", "Read:videos"]
     }
-],
+  ],
   "cors": {
     "enabled": true,
     "origins": ["*"],

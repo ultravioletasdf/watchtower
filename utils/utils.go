@@ -46,7 +46,7 @@ func GenerateString(length int) (string, error) {
 	}
 	return hex.EncodeToString(b), nil
 }
-func GenerateVerifyCode() (int64, error) {
+func GenerateVerifyCode() (int32, error) {
 	n, err := rand.Int(rand.Reader, big.NewInt(VERIFY_CODE_MAX))
-	return n.Int64(), err
+	return int32(n.Int64()), err
 }

@@ -1,0 +1,162 @@
+package frontend
+
+import "github.com/dimmerz92/go-lucide-icons/pkg/templ/icons"
+import "fmt"
+
+templ Upload() {
+	@AppLayout() {
+		<script src="https://unpkg.com/dropzone@6.0.0-beta.1/dist/dropzone-min.js"></script>
+		<link href="https://unpkg.com/dropzone@6.0.0-beta.1/dist/dropzone.css" rel="stylesheet" type="text/css"/>
+		<form action="/upload/video" class="dropzone" id="videodropzone"></form>
+		<script>
+			let dropzone = new Dropzone("#videodropzone", {
+			    acceptedFiles: "video/*",
+				maxFilesize: 256000, // 256 GB,
+				maxFiles: 1,
+				dictDefaultMessage: "Drop a video to upload",
+				accept: function(file, done) {
+				    console.log(file['type'])
+				    if (file && file['type'].startsWith("video/")) {
+						let xhr = new XMLHttpRequest()
+						xhr.open("POST", "/upload/video")
+						xhr.send()
+						let setUrl = (url) => {
+						  this.options.url = url
+						}
+						xhr.onreadystatechange = function() {
+						    if (this.readyState = 4) {
+								console.log(this.status, this.responseText, file)
+								if (this.status === 200) {
+								    file.postData = JSON.parse(this.responseText)
+									setUrl(file.postData.url)
+									done()
+								}
+							}
+						}
+						this.options.url = url
+					}
+				},
+				sending: function(file, xhr, formData) {
+				    for (let key in file.postData.form_data) {
+						formData.append(key, file.postData.form_data[key])
+					}
+				    console.log(file,  xhr)
+				},
+				success: function(file) {
+				  window.location.replace("/upload/"+file.postData.id)
+				}
+			})
+		</script>
+	}
+}
+
+func AfterUploadXData(uploadId string) string {
+	return fmt.Sprintf("{ title: $persist('').as('%s-title'), description: $persist('').as('%s-description'), visibility: $persist('').as('%s-visibility') }", uploadId, uploadId, uploadId)
+}
+
+templ AfterUpload(uploadId string) {
+	@AppLayout() {
+		<form hx-post={ fmt.Sprintf("/upload/%s/publish", uploadId) } hx-target="#error" class="w-[clamp(3rem,20rem,100%)]" x-data={ AfterUploadXData(uploadId) }>
+			<fieldset class="fieldset">
+				<legend class="fieldset-legend">Title</legend>
+				<div class="input">
+					<input name="title" type="text" maxlength="100" required placeholder="Enter title for the video" x-model="title"/>
+					<span class="label select-none" x-text="`${title.length}/100`"></span>
+				</div>
+			</fieldset>
+			<fieldset class="fieldset">
+				<div class="flex flex-row justify-between items-center">
+					<legend class="fieldset-legend">Description</legend>
+					<div class="select-none opacity-60 text-xs" x-text="`${description.length}/1000`"></div>
+				</div>
+				<textarea name="description" class="textarea h-24" placeholder="Describe your video" x-model="description"></textarea>
+			</fieldset>
+			<fieldset class="fieldset">
+				<legend class="fieldset-legend">Visibility</legend>
+				<select name="visibility" class="select" x-model="visibility">
+					<option disabled>Select a visibility</option>
+					<option selected>Public</option>
+					<option>Unlisted</option>
+					<option>Private</option>
+				</select>
+			</fieldset>
+			<fieldset class="fieldset" x-data>
+				<legend class="fieldset-legend">Thumbnail</legend>
+				<label id="thumbnailLabel" for="thumbnailInput" class=" aspect-video transition bg-base-100 hover:bg-base-10p flex items-center justify-center rounded border border-input bg-center bg-cover opacity-100" :class="$store.thumbnail.state === 'uploaded' ? 'border-none! hover:opacity-70' : ''" x-bind:style="$store.thumbnail.state === 'uploaded' ?`background-image: url('http://localhost:9000/thumbnails/${$store.thumbnail.id}.webp')` : ''">
+					@icons.ImagePlus(icons.IconProps{Class: "size-6", Attributes: templ.Attributes{"x-show": "$store.thumbnail.state === 'not_uploaded'"}})
+					@icons.LoaderCircle(icons.IconProps{Class: "size-6 animate-spin", Attributes: templ.Attributes{"x-show": "$store.thumbnail.state === 'uploading'"}})
+					@icons.Pencil(icons.IconProps{Class: "size-6", Attributes: templ.Attributes{"x-show": "$store.thumbnail.state === 'uploaded'"}})
+				</label>
+				<input type="file" id="thumbnailInput" accept="image/*" class="hidden"/>
+				<input type="text" name="thumbnailId" id="thumbnailId" class="hidden" required x-model="$store.thumbnail.id"/>
+			</fieldset>
+			<button class="btn btn-primary btn-block mt-4">Publish</button>
+			<div id="error" class="text-error text-sm text-center"></div>
+		</form>
+	}
+	<script defer>
+		document.querySelector('#thumbnailInput').addEventListener("change", onUpload)
+		const label = document.querySelector('#thumbnailLabel')
+		const thumbnailId = document.querySelector('#thumbnailId')
+
+		document.addEventListener("alpine:initializing", () => {
+    		Alpine.store("thumbnail", {
+    		  id: Alpine.$persist("").as("{{ uploadId }}-thumbnail-id"),
+              state: Alpine.$persist("not_uploaded").as("{{ uploadId }}-thumbnail-state")
+    		})
+		})
+		async function onUpload(e) {
+		    const file = e.target.files[0]
+			let res = await fetch("/upload/thumbnail", {
+			    method: 'POST'
+			})
+			const {url, form_data, id} = await res.json()
+			console.log("Starting upload to " + id)
+			Alpine.store("thumbnail").state = "uploading"
+			const formData = new FormData()
+			for (let key in form_data) {
+			  formData.append(key, form_data[key])
+			}
+			formData.append('file', file)
+			await uploadToS3(url, formData)
+			res = await fetch(`/upload/thumbnail/${id}/process`, {
+			  method: 'POST'
+			})
+			if (!res.ok) {
+			    alert("Failed to upload")
+				return
+			}
+			thumbnailId.value = id
+			Alpine.store("thumbnail").id = id
+			Alpine.store("thumbnail").state = "uploaded"
+		}
+		function uploadToS3(url, formData) {
+    		return new Promise((res, rej) => {
+                const xhr = new XMLHttpRequest()
+          		xhr.open('POST', url)
+
+          		xhr.upload.onprogress = (event) => {
+          		    if (event.lengthComputable) {
+          				const percent = (event.loaded / event.total) * 100
+          				console.log(`Progress: ${percent.toFixed(2)}%`)
+                 	}
+          		}
+                xhr.onload = () => {
+                    if (xhr.status === 204) {
+                        console.log('Upload successful');
+                    } else {
+                        console.error('Upload failed', xhr.responseText);
+                    }
+                    res()
+                }
+
+                xhr.onerror = (e) => {
+                  console.error('Upload error');
+                  rej(e)
+                };
+
+                xhr.send(formData);
+            })
+		}
+	</script>
+}

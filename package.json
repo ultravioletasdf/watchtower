@@ -12,7 +12,10 @@
   "type": "module",
   "private": true,
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "daisyui": "^5.0.50",
+    "tailwindcss": "^4.1.11",
+    "vidstack": "^0.6.15"
   },
   "peerDependencies": {
     "typescript": "^5"

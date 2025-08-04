@@ -1,12 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"log"
 	"strconv"
 	"time"
 	"videoapp/proto"
+	"videoapp/server/common"
 	sqlc "videoapp/sql"
 	"videoapp/vips"
 
@@ -19,69 +23,87 @@ type thumbnailsServer struct {
 
 func (s *thumbnailsServer) CreateUpload(ctx context.Context, req *proto.CreateUploadRequest) (*proto.CreateUploadResponse, error) {
 	if len(req.Session) != SESSION_TOKEN_LENGTH {
-		return nil, ErrSessionWrongSize
+		return nil, common.ErrSessionWrongSize
 	}
 	user, err := executor.GetUserFromSession(ctx, req.Session)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, ErrSessionNotFound
+		return nil, common.ErrSessionNotFound
 	}
 
 	id := snowflakeNode.Generate()
+
 	policy := minio.NewPostPolicy()
 	policy.SetBucket("staging-thumbnails")
 	policy.SetKey(id.String())
 	policy.SetContentTypeStartsWith("image")
 	policy.SetExpires(time.Now().Add(15 * time.Minute))
 
-	policy.SetContentLengthRange(1024*1024, 1024*1024*2)
+	policy.SetContentLengthRange(1024, 1024*1024*2)
 
-	url, fd, err := minioClient.PresignedPostPolicy(ctx, policy)
+	url, fd, err := s3.PresignedPostPolicy(ctx, policy)
 	if err != nil {
-		return nil, ErrInternal(err)
+		return nil, common.ErrInternal(err)
 	}
-
-	err = executor.CreateUpload(ctx, sqlc.CreateUploadParams{ID: id.Int64(), UserID: user.ID, Stage: StageNotUploaded, CreatedAt: time.Now().Unix()})
+	err = executor.CreateUpload(ctx, sqlc.CreateUploadParams{ID: id.Int64(), UserID: user.ID})
 	if err != nil {
-		return nil, ErrInternal(err)
+		return nil, common.ErrInternal(err)
 	}
 
 	return &proto.CreateUploadResponse{Url: url.String(), Id: id.Int64(), FormData: fd}, nil
 }
 func (s *thumbnailsServer) Process(ctx context.Context, req *proto.ThumbnailsProcessRequest) (*proto.ThumbnailsProcessResponse, error) {
 	if len(req.Session) != SESSION_TOKEN_LENGTH {
-		return nil, ErrSessionWrongSize
+		return nil, common.ErrSessionWrongSize
 	}
 	user, err := executor.GetUserFromSession(ctx, req.Session)
 	if errors.Is(err, sql.ErrNoRows) {
-		return nil, ErrSessionNotFound
+		return nil, common.ErrSessionNotFound
 	}
 	thumb, err := executor.GetUpload(ctx, req.Id)
 	if err == sql.ErrNoRows {
-		return nil, ErrNoUploadFound
+		return nil, common.ErrNoUploadFound
 	}
 	if err != nil {
-		return nil, ErrInternal(err)
+		return nil, common.ErrInternal(err)
 	}
 	if thumb.UserID != user.ID {
-		return nil, ErrUnauthorized
+		return nil, common.ErrUnauthorized
 	}
 
 	idString := strconv.FormatInt(req.Id, 10)
-	obj, err := minioClient.GetObject(ctx, "staging-thumbnails", idString, minio.GetObjectOptions{})
+	obj, err := s3.GetObject(ctx, "staging-thumbnails", idString, minio.GetObjectOptions{})
 	if err != nil {
-		return nil, ErrInternal(err)
+		log.Println("errhere")
+		return nil, common.ErrInternal(err)
 	}
 	source := vips.NewSource(obj)
 	defer source.Close()
 
-	image, err := vips.NewThumbnailSource(source, 1280, &vips.ThumbnailSourceOptions{Height: 720, Size: vips.SizeBoth, FailOn: vips.FailOnError})
+	image, err := vips.NewThumbnailSource(source, 1280, &vips.ThumbnailSourceOptions{Height: 720, Size: vips.SizeBoth, FailOn: vips.FailOnError, Crop: vips.InterestingAttention})
 	if err != nil {
-		return nil, ErrInternal(err)
+		return nil, common.ErrInternal(err)
 	}
 	defer image.Close()
-	err = image.Webpsave(idString+".webp", &vips.WebpsaveOptions{Q: 85, Effort: 6, SmartSubsample: true, Lossless: true})
+
+	buf := &writeCloser{bytes.NewBuffer(nil)}
+	target := vips.NewTarget(buf)
+	err = image.WebpsaveTarget(target, vips.DefaultWebpsaveTargetOptions())
 	if err != nil {
-		return nil, ErrInternal(err)
+		return nil, common.ErrInternal(err)
 	}
+	_, err = s3.PutObject(ctx, "thumbnails", idString+".webp", buf, int64(buf.Len()), minio.PutObjectOptions{})
+	if err != nil {
+		fmt.Println("errhere2")
+		return nil, common.ErrInternal(err)
+	}
+
 	return &proto.ThumbnailsProcessResponse{}, nil
+}
+
+type writeCloser struct {
+	*bytes.Buffer
+}
+
+func (wc *writeCloser) Close() error {
+	return nil
 }

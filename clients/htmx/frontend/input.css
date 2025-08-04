@@ -1,0 +1,45 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+.no-spinner {
+    -moz-appearance: textfield;
+}
+
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button {
+    margin: 0;
+    -webkit-appearance: none;
+}
+
+@theme {
+    --color-base-10p: color-mix(
+        in oklab,
+        var(--color-base-content) 10%,
+        transparent
+    );
+}
+
+.dropzone {
+    @apply border-base-content/20! border-2! border-dashed! hover:bg-base-content/5! transition!;
+}
+
+.dz-image {
+    position: relative;
+    padding-top: 56.25%; /* 9 / 16 = 0.5625 */
+}
+
+.dz-image img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.border-input {
+    border-color: color-mix(in oklab, var(--color-base-content) 20%, #0000);
+}
+
+[x-cloak] {
+    display: none !important;
+}

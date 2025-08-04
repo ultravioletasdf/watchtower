@@ -1,8 +1,8 @@
 -- name: CreateUpload :exec
 INSERT INTO
-    uploads (id, user_id, stage, created_at)
+    uploads (id, user_id, created_at)
 VALUES
-    (?, ?, ?, ?);
+    ($1, $2, CURRENT_TIMESTAMP);
 
 -- name: GetUpload :one
 SELECT
@@ -10,11 +10,11 @@ SELECT
 FROM
     uploads
 WHERE
-    id = ?;
+    id = $1;
 
--- name: UpdateUploadStage :exec
-UPDATE uploads
+-- name: UpdateVideoStage :exec
+UPDATE videos
 SET
-    stage = ?
+    stage = $1
 WHERE
-    id = ?;
+    id = $2;
