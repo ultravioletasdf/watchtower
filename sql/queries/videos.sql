@@ -33,3 +33,8 @@ WHERE id = $1;
 SELECT stage, upload_id FROM videos
 WHERE id = $1
 LIMIT 1;
+
+-- name: GetStages :one
+SELECT json_object_agg(id, stage)
+FROM videos
+WHERE id = ANY(sqlc.arg(ids)::bigint[]);

@@ -6,20 +6,51 @@ import "github.com/dimmerz92/go-lucide-icons/pkg/templ/icons"
 import "fmt"
 
 templ Profile(videos []*proto.GetUserVideosResponseVideo) {
+	<script>
+		let toPoll = []
+		function poll(id) {
+		    console.log("Polling " + id)
+			toPoll.push(id)
+		}
+		setInterval(async () => {
+		    console.log("Refreshing stages")
+			const res = await fetch("/stages", {
+			    method: 'POST',
+			    headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(toPoll)
+			})
+			let json = await res.json()
+			Alpine.store("stages", json)
+		},  15000)
+		document.addEventListener("alpine:initializing", () => {
+    		Alpine.store("stages", {})
+		})
+	</script>
 	@AppLayout() {
 		Profile
 		<div class="gap-3 grid  grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
 			for _, v := range videos {
 				<a href={ templ.SafeURL(fmt.Sprintf("/videos/%d", v.Id)) }>
 					{{
+						notProcessed := v.Stage != proto.Stage_Processed
 						opacity := 0.0
-						if v.Stage != proto.Stage_Processed {
+						if notProcessed {
 							opacity = 0.6
 						}
 					}}
-					<div class={ "bg-base bg-cover bg-center aspect-video rounded flex items-center justify-center", BackgroundThumbnail(v.ThumbnailId, opacity) }>
-						if v.Stage != proto.Stage_Processed {
-							@icons.Cog(icons.IconProps{Class: "animate-spin size-6"})
+					<div
+						class={ "bg-base bg-cover bg-center aspect-video rounded flex items-center justify-center", BackgroundThumbnail(v.ThumbnailId) }
+						style={ fmt.Sprintf("--opacity: %f", opacity) }
+						if notProcessed {
+							x-init={ fmt.Sprintf("poll('%d')", v.Id) }
+							x-data
+							x-bind:style={ fmt.Sprintf("$store.stages['%d'] !== %d ? { '--opacity': 0.6 } : { '--opacity': 0.0 }", v.Id, proto.Stage_Processed) }
+						}
+					>
+						if notProcessed {
+							@icons.Cog(icons.IconProps{Class: "size-6 animate-spin", Attributes: templ.Attributes{"x-show": fmt.Sprintf("$store.stages['%d'] !== %d", v.Id, proto.Stage_Processed)}})
 						}
 					</div>
 					{ v.Title }
@@ -32,6 +63,6 @@ templ Profile(videos []*proto.GetUserVideosResponseVideo) {
 	}
 }
 
-css BackgroundThumbnail(id int64, opacity float64) {
-	background-image: { templ.SafeCSSProperty(fmt.Sprintf("linear-gradient(rgba(0, 0, 0, %f), rgba(0, 0, 0, %f)), url(\"http://localhost:9000/thumbnails/%d.webp\")", opacity, opacity, id)) };
+css BackgroundThumbnail(id int64) {
+	background-image: { templ.SafeCSSProperty(fmt.Sprintf("linear-gradient(rgba(0, 0, 0, var(--opacity)), rgba(0, 0, 0, var(--opacity))), url(\"http://localhost:9000/thumbnails/%d.webp\")", id)) };
 }

@@ -162,3 +162,10 @@ func (s *videoService) GetStage(ctx context.Context, req *proto.VideosGetStageRe
 	}
 	return &proto.VideosGetStageResponse{Stage: proto.Stage(stage.Stage), UploadId: stage.UploadID}, nil
 }
+func (s *videoService) GetStages(ctx context.Context, req *proto.VideosGetStagesRequest) (*proto.VideosGetStagesResponse, error) {
+	json, err := executor.GetStages(ctx, req.Ids)
+	if err != nil {
+		return nil, common.ErrInternal(err)
+	}
+	return &proto.VideosGetStagesResponse{Result: string(json)}, nil
+}
