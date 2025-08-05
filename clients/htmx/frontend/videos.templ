@@ -11,21 +11,14 @@ templ ViewVideo(video *proto.GetVideoResponse) {
 	@AppLayout() {
 		{ video.Title }
 		{ video.CreatedAt }
-		if video.Stage != proto.Stage_Processed {
-			@VideoStatusPoller(video)
-		} else {
-			<media-player src={ fmt.Sprintf("http://localhost:9000/videos/%d/master.m3u8", video.UploadId) }>
-				<media-provider></media-provider>
-				<media-video-layout thumbnails="https://files.vidstack.io/sprite-fight/thumbnails.vtt"></media-video-layout>
-			</media-player>
-		}
+		@VideoStatusPoller(video)
 	}
 }
 
 templ VideoStatusPoller(video *proto.GetVideoResponse) {
 	<div id="poller">
 		if video.Stage == proto.Stage_Processed {
-			<media-player src={ fmt.Sprintf("http://localhost:9000/videos/%d/master.m3u8", video.UploadId) }>
+			<media-player autoplay src={ fmt.Sprintf("http://localhost:9000/videos/%d/master.m3u8", video.UploadId) }>
 				<media-provider></media-provider>
 				<media-video-layout thumbnails="https://files.vidstack.io/sprite-fight/thumbnails.vtt"></media-video-layout>
 			</media-player>
