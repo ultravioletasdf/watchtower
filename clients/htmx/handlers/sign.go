@@ -88,3 +88,11 @@ func postSignUp(c *fiber.Ctx) error {
 	c.Set("HX-Redirect", "/")
 	return nil
 }
+func signOut(c *fiber.Ctx) error {
+	_, err := deps.Clients.Sessions.Delete(ctx, &proto.Session{Token: c.Cookies("session")})
+	if err != nil {
+		fmt.Printf("Failed to delete session: %v\n", err)
+	}
+	c.ClearCookie("session")
+	return c.Redirect("/")
+}
