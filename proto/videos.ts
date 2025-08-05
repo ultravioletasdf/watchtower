@@ -778,6 +778,7 @@ export namespace videos {
             visibility?: Visibility;
             created_at?: number;
             thumbnail_id?: string;
+            stage?: Stage;
         }) {
             super();
             pb_1.Message.initialize(this, Array.isArray(data) ? data : [], 0, -1, [], this.#one_of_decls);
@@ -796,6 +797,9 @@ export namespace videos {
                 }
                 if ("thumbnail_id" in data && data.thumbnail_id != undefined) {
                     this.thumbnail_id = data.thumbnail_id;
+                }
+                if ("stage" in data && data.stage != undefined) {
+                    this.stage = data.stage;
                 }
             }
         }
@@ -829,12 +833,19 @@ export namespace videos {
         set thumbnail_id(value: string) {
             pb_1.Message.setField(this, 5, value);
         }
+        get stage() {
+            return pb_1.Message.getFieldWithDefault(this, 6, Stage.NotUploaded) as Stage;
+        }
+        set stage(value: Stage) {
+            pb_1.Message.setField(this, 6, value);
+        }
         static fromObject(data: {
             id?: string;
             title?: string;
             visibility?: Visibility;
             created_at?: number;
             thumbnail_id?: string;
+            stage?: Stage;
         }): GetUserVideosResponseVideo {
             const message = new GetUserVideosResponseVideo({});
             if (data.id != null) {
@@ -852,6 +863,9 @@ export namespace videos {
             if (data.thumbnail_id != null) {
                 message.thumbnail_id = data.thumbnail_id;
             }
+            if (data.stage != null) {
+                message.stage = data.stage;
+            }
             return message;
         }
         toObject() {
@@ -861,6 +875,7 @@ export namespace videos {
                 visibility?: Visibility;
                 created_at?: number;
                 thumbnail_id?: string;
+                stage?: Stage;
             } = {};
             if (this.id != null) {
                 data.id = this.id;
@@ -876,6 +891,9 @@ export namespace videos {
             }
             if (this.thumbnail_id != null) {
                 data.thumbnail_id = this.thumbnail_id;
+            }
+            if (this.stage != null) {
+                data.stage = this.stage;
             }
             return data;
         }
@@ -893,6 +911,8 @@ export namespace videos {
                 writer.writeInt64(4, this.created_at);
             if (this.thumbnail_id != "0")
                 writer.writeInt64String(5, this.thumbnail_id);
+            if (this.stage != Stage.NotUploaded)
+                writer.writeEnum(6, this.stage);
             if (!w)
                 return writer.getResultBuffer();
         }
@@ -916,6 +936,9 @@ export namespace videos {
                         break;
                     case 5:
                         message.thumbnail_id = reader.readInt64String();
+                        break;
+                    case 6:
+                        message.stage = reader.readEnum();
                         break;
                     default: reader.skipField();
                 }

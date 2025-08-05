@@ -109,7 +109,7 @@ func (s *videoService) GetUserVideos(ctx context.Context, req *proto.GetUserVide
 	}
 	videos := make([]*proto.GetUserVideosResponseVideo, len(res))
 	for i := range res {
-		videos[i] = &proto.GetUserVideosResponseVideo{Id: res[i].ID, Title: res[i].Title, Visibility: proto.Visibility(res[i].Visibility), CreatedAt: res[i].CreatedAt.Time.Unix(), ThumbnailId: res[i].ThumbnailID}
+		videos[i] = &proto.GetUserVideosResponseVideo{Id: res[i].ID, Title: res[i].Title, Visibility: proto.Visibility(res[i].Visibility), CreatedAt: res[i].CreatedAt.Time.Unix(), ThumbnailId: res[i].ThumbnailID, Stage: proto.Stage(res[i].Stage)}
 	}
 	return &proto.GetUserVideosResponse{Videos: videos}, nil
 }

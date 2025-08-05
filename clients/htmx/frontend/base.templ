@@ -1,5 +1,8 @@
 package frontend
 
+import "time"
+import "fmt"
+
 templ Base() {
 	<!DOCTYPE html>
 	<html class="h-full">
@@ -14,4 +17,44 @@ templ Base() {
 			{ children... }
 		</body>
 	</html>
+}
+
+func pluralize(value int, unit string) string {
+	if value == 1 {
+		return fmt.Sprintf("%d %s ago", value, unit)
+	}
+	return fmt.Sprintf("%d %ss ago", value, unit)
+}
+
+func formatDate(epoch int64) string {
+	now := time.Now()
+	t := time.Unix(epoch, 0)
+	diff := now.Sub(t)
+
+	const (
+		minute = time.Minute
+		hour   = time.Hour
+		day    = 24 * hour
+		week   = 7 * day
+	)
+
+	if diff < week {
+		minutes := int(diff.Minutes())
+		hours := int(diff.Hours())
+		days := int(diff.Hours() / 24)
+
+		switch {
+		case minutes < 1:
+			return "just now"
+		case minutes < 60:
+			return pluralize(minutes, "minute")
+		case hours < 24:
+			return pluralize(hours, "hour")
+		default:
+			return pluralize(days, "day")
+		}
+	}
+
+	// Fallback to absolute date
+	return t.Format("02 Jan 2006")
 }

@@ -51,6 +51,7 @@ message GetUserVideosResponseVideo {
   Visibility visibility = 3;
   int64 created_at = 4;
   int64 thumbnail_id = 5 [jstype = JS_STRING];
+  Stage stage = 6;
 }
 
 message DeleteVideoRequest {
