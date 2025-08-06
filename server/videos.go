@@ -93,6 +93,10 @@ func (s *videoService) Create(ctx context.Context, req *proto.VideosCreateReques
 	if err != nil {
 		return nil, common.ErrInternal(err)
 	}
+	err = rabbit.channel.PublishWithContext(ctx, "", rabbit.queues.GenerateThumbnails.Name, true, false, amqp091.Publishing{ContentType: "application", DeliveryMode: amqp091.Persistent, Body: body})
+	if err != nil {
+		return nil, common.ErrInternal(err)
+	}
 	return &proto.VideosCreateResponse{Id: id.Int64()}, nil
 }
 func (s *videoService) GetUserVideos(ctx context.Context, req *proto.GetUserVideosRequest) (*proto.GetUserVideosResponse, error) {

@@ -9,12 +9,16 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/minio/minio-go/v7"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"gopkg.in/gographics/imagick.v3/imagick"
 )
 
 var cfg utils.Config
 var s3 *minio.Client
 
 func main() {
+	imagick.Initialize()
+	defer imagick.Terminate()
+
 	queues.CleanupAll()
 
 	envFile := flag.String("env", "", "File path to env file")

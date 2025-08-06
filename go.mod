@@ -20,6 +20,7 @@ require (
 	golang.org/x/crypto v0.39.0
 	google.golang.org/grpc v1.73.0
 	google.golang.org/protobuf v1.36.6
+	gopkg.in/gographics/imagick.v3 v3.7.2
 	gopkg.in/vansante/go-ffprobe.v2 v2.2.1
 )
 

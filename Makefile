@@ -6,6 +6,8 @@ dev/video_analyser:
 	cd queues/video_analyser && air
 dev/transcoder:
 	cd queues/transcoder && air
+dev/genvtt:
+	cd queues/genvtt && air
 run/server:
 	cd server && go run .
 run/web:

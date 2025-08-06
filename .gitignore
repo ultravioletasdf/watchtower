@@ -1,6 +1,9 @@
-proto/*{.pb.go,.ts}
+proto/*.pb.go
+proto/*.ts
 sql/*.go
-queues/*/{videos,results,.models}
+queues/*/videos
+queues/*/results
+queues/*/.models
 vips
 tmp
 .vscode

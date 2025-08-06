@@ -10,6 +10,7 @@ import (
 
 	"github.com/minio/minio-go/v7"
 	"github.com/rabbitmq/amqp091-go"
+	ffmpeg "github.com/u2takey/ffmpeg-go"
 )
 
 var ctx = context.Background()
@@ -51,4 +52,23 @@ func CleanupAll() {
 			log.Printf("failed to clean up %s: %v\n", path, err)
 		}
 	}
+}
+
+// Splits a video into frames
+func Split(d amqp091.Delivery, uploadId string, vf string) error {
+	err := os.MkdirAll("results/"+uploadId, os.ModePerm)
+	if err != nil {
+		log.Printf("Failed to create directories: %v\n", err)
+		return err
+	}
+	output := "results/" + uploadId + "/frame_%03d.jpeg"
+	if err := ffmpeg.Input("videos/"+uploadId, ffmpeg.KwArgs{}).Output(output, ffmpeg.KwArgs{"vf": vf, "vsync": "vfr"}).OverWriteOutput().Run(); err != nil {
+		log.Printf("Failed to split into frames: %v\n", err)
+		if err := d.Reject(true); err != nil {
+			log.Printf("Failed to requeue: %v\n", err)
+		}
+		return err
+	}
+	log.Printf("Handled upload %s", uploadId)
+	return nil
 }

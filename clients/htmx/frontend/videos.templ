@@ -20,7 +20,7 @@ templ VideoStatusPoller(video *proto.GetVideoResponse) {
 		if video.Stage == proto.Stage_Processed {
 			<media-player autoplay src={ fmt.Sprintf("http://localhost:9000/videos/%d/master.m3u8", video.UploadId) }>
 				<media-provider></media-provider>
-				<media-video-layout thumbnails="https://files.vidstack.io/sprite-fight/thumbnails.vtt"></media-video-layout>
+				<media-video-layout thumbnails={ fmt.Sprintf("http://localhost:9000/videos/%d/thumbnails.vtt", video.UploadId) }></media-video-layout>
 			</media-player>
 		} else {
 			<div class="aspect-video w-full flex items-center justify-center gap-2 bg-base-300 rounded-xl border border-base-10p" hx-get={ fmt.Sprintf("/status/%d", video.Id) } hx-trigger="every 10s" hx-swap="outerHTML" hx-target="#poller">

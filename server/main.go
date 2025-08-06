@@ -31,8 +31,9 @@ type Rabbit struct {
 	connection *amqp091.Connection
 	channel    *amqp091.Channel
 	queues     struct {
-		AnalyseVideos   *amqp091.Queue
-		TranscodeVideos *amqp091.Queue
+		AnalyseVideos      *amqp091.Queue
+		TranscodeVideos    *amqp091.Queue
+		GenerateThumbnails *amqp091.Queue
 	}
 }
 
@@ -107,7 +108,12 @@ func connectRabbit() {
 	if err != nil {
 		log.Fatalf("Failed to declare queue: %v", err)
 	}
+	thumbnailQueue, err := rabbit.channel.QueueDeclare("generate_thumbnails", true, false, false, false, nil)
+	if err != nil {
+		log.Fatalf("Failed to declare queue: %v", err)
+	}
 
 	rabbit.queues.AnalyseVideos = &analyseVideoQueue
 	rabbit.queues.TranscodeVideos = &transcodeQueue
+	rabbit.queues.GenerateThumbnails = &thumbnailQueue
 }

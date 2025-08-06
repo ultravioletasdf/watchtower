@@ -14,8 +14,6 @@ import (
 	"github.com/corona10/goimagehash"
 	"github.com/rabbitmq/amqp091-go"
 	protobuf "google.golang.org/protobuf/proto"
-
-	ffmpeg "github.com/u2takey/ffmpeg-go"
 )
 
 func handleMessage(d amqp091.Delivery) {
@@ -35,7 +33,7 @@ func handleMessage(d amqp091.Delivery) {
 		return
 	}
 
-	if err := split(d, uploadId); err != nil {
+	if err := queues.Split(d, uploadId, "fps=1"); err != nil {
 		return
 	}
 	if err := dedupe(uploadId); err != nil {
@@ -52,23 +50,7 @@ func handleMessage(d amqp091.Delivery) {
 	}
 	queues.Cleanup(message.UploadId)
 }
-func split(d amqp091.Delivery, uploadId string) error {
-	err := os.MkdirAll("results/"+uploadId, os.ModePerm)
-	if err != nil {
-		log.Printf("Failed to create directories: %v\n", err)
-		return err
-	}
-	output := "results/" + uploadId + "/frame_%03d.jpeg"
-	if err := ffmpeg.Input("videos/"+uploadId, ffmpeg.KwArgs{}).Output(output, ffmpeg.KwArgs{"vf": "fps=1", "vsync": "vfr"}).OverWriteOutput().Run(); err != nil {
-		log.Printf("Failed to split into frames: %v\n", err)
-		if err := d.Reject(true); err != nil {
-			log.Printf("Failed to requeue: %v\n", err)
-		}
-		return err
-	}
-	log.Printf("Handled upload %s", uploadId)
-	return nil
-}
+
 func dedupe(uploadId string) error {
 	hashes := make(map[uint64]string)
 	thresh := 5
