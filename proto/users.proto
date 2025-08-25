@@ -4,9 +4,16 @@ option go_package = "videoapp/proto";
 
 package users;
 
+import "google/protobuf/timestamp.proto";
+
 service Users {
   rpc Create(CreateRequest) returns (CreateResponse) {}
   rpc Verify(VerifyRequest) returns (Empty) {}
+  rpc Follow(FollowRequest) returns (Empty) {}
+  rpc Unfollow(FollowRequest) returns (Empty) {}
+  rpc Get(UsersGetRequest) returns (UsersGetResponse) {}
+  rpc GetFollowers(GetFollowsRequest) returns (FollowUsers) {}
+  rpc GetFollowing(GetFollowsRequest) returns (FollowUsers) {}
 }
 message Empty {}
 message CreateRequest {
@@ -21,7 +28,30 @@ message VerifyRequest {
   string session = 1;
   int32 code = 2;
 }
-
+message FollowRequest {
+  string session = 1;
+  int64 id_to_follow = 2;
+}
+message UsersGetRequest {
+  string session = 1;
+  string username = 2;
+}
+message UsersGetResponse {
+  User user = 1;
+  bool is_following = 2;
+}
+message GetFollowsRequest {
+  int64 user_id = 1;
+  int32 page = 2;
+}
+message FollowUsers {
+  repeated FollowUser users = 1;
+}
+message FollowUser {
+  int64 user_id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  string username = 3;
+}
 service Sessions {
   rpc Create(Crededentials) returns (Session){}
   rpc GetUser(Session) returns (User){}
@@ -31,8 +61,10 @@ message User {
   int64 id = 1;
   string email = 2;
   string username = 3;
-  int64 created_at = 4;
+  google.protobuf.Timestamp created_at = 4;
   uint64 flags = 5;
+  int64 follower_count = 6;
+  int64 following_count = 7;
 }
 message Crededentials {
   string email = 1;

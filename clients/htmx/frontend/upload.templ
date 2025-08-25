@@ -2,9 +2,10 @@ package frontend
 
 import "github.com/dimmerz92/go-lucide-icons/pkg/templ/icons"
 import "fmt"
+import "videoapp/proto"
 
-templ Upload() {
-	@AppLayout() {
+templ Upload(user *proto.User) {
+	@AppLayout(user) {
 		<script src="https://unpkg.com/dropzone@6.0.0-beta.1/dist/dropzone-min.js"></script>
 		<link href="https://unpkg.com/dropzone@6.0.0-beta.1/dist/dropzone.css" rel="stylesheet" type="text/css"/>
 		<form action="/upload/video" class="dropzone" id="videodropzone"></form>
@@ -54,8 +55,8 @@ func AfterUploadXData(uploadId string) string {
 	return fmt.Sprintf("{ title: $persist('').as('%s-title'), description: $persist('').as('%s-description'), visibility: $persist('').as('%s-visibility') }", uploadId, uploadId, uploadId)
 }
 
-templ AfterUpload(uploadId string) {
-	@AppLayout() {
+templ AfterUpload(user *proto.User, uploadId string) {
+	@AppLayout(user) {
 		<form hx-post={ fmt.Sprintf("/upload/%s/publish", uploadId) } hx-target="#error" class="w-[clamp(3rem,20rem,100%)]" x-data={ AfterUploadXData(uploadId) }>
 			<fieldset class="fieldset">
 				<legend class="fieldset-legend">Title</legend>

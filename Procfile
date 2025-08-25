@@ -1,5 +1,5 @@
 minio: minio server ./tmp/minio
-rabbitmq: wait-for-it -t 0 localhost:9000 -- docker compose up
+d-c: wait-for-it -t 0 localhost:9000 -- docker compose up
 
 queue_video_analsyer: wait-for-it -t 0 localhost:5672 -- make dev/video_analyser
 queue_transcoder: wait-for-it -t 0 localhost:5672 -- make dev/transcoder

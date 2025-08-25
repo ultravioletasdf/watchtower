@@ -4,15 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"videoapp/clients/htmx/frontend"
-	"videoapp/proto"
-	"videoapp/server/common"
-	"videoapp/utils"
 
 	"github.com/a-h/templ"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/etag"
 	"google.golang.org/grpc/status"
+
+	"videoapp/clients/htmx/frontend"
+	"videoapp/proto"
+	"videoapp/server/common"
+	"videoapp/utils"
 )
 
 type Dependencies struct {
@@ -38,8 +39,12 @@ func Add(app *fiber.App, dependencies Dependencies) {
 	app.Post("/sign/up", postSignUp)
 	app.Get("/sign/out", signOut)
 
-	app.Get("/profile", profile)
+	app.Get("/user/:username", profile)
+	app.Get("/user/:id/:type", getFollowsModal)
 	app.Post("/stages", getStages)
+
+	app.Post("/follow/:id", follow)
+	app.Delete("/follow/:id", follow)
 
 	app.Get("/videos/:id", viewVideo)
 	app.Get("/status/:id", videoStatus)
@@ -56,10 +61,10 @@ func Add(app *fiber.App, dependencies Dependencies) {
 }
 func root(c *fiber.Ctx) error {
 	if session := c.Cookies("session"); session != "" {
-		user, err := deps.Clients.Sessions.GetUser(ctx, &proto.Session{Token: session})
+		user, err := deps.Clients.Sessions.GetUser(c.Context(), &proto.Session{Token: session})
 		if err == nil {
 			fmt.Println(user)
-			return Render(c, frontend.Home())
+			return Render(c, frontend.Home(user))
 		}
 		status, ok := status.FromError(err)
 		if ok && errors.Is(status.Err(), common.ErrSessionNotFound) || errors.Is(status.Err(), common.ErrSessionWrongSize) {

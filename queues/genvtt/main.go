@@ -3,13 +3,14 @@ package main
 import (
 	"flag"
 	"log"
-	"videoapp/queues"
-	"videoapp/utils"
 
 	"github.com/joho/godotenv"
 	"github.com/minio/minio-go/v7"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"gopkg.in/gographics/imagick.v3/imagick"
+
+	"videoapp/queues"
+	"videoapp/utils"
 )
 
 var cfg utils.Config

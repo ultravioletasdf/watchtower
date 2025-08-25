@@ -4,12 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+
+	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
 	"videoapp/proto"
 	"videoapp/server/common"
 	sqlc "videoapp/sql"
 	"videoapp/utils"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
 const SESSION_TOKEN_LENGTH = 32
@@ -57,7 +59,7 @@ func (s *sessionServer) GetUser(ctx context.Context, req *proto.Session) (*proto
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, common.ErrSessionNotFound
 	}
-	return &proto.User{Id: user.ID, Email: user.Email, Username: user.Username, CreatedAt: user.CreatedAt.Time.Unix(), Flags: uint64(user.Flags)}, nil
+	return &proto.User{Id: user.ID, Email: user.Email, Username: user.Username, CreatedAt: timestamppb.New(user.CreatedAt.Time), Flags: uint64(user.Flags), FollowerCount: user.FollowerCount, FollowingCount: user.FollowingCount}, nil
 }
 func (s *sessionServer) Delete(ctx context.Context, req *proto.Session) (*proto.Empty, error) {
 	if len(req.Token) != SESSION_TOKEN_LENGTH {

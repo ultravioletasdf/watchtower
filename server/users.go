@@ -5,14 +5,16 @@ import (
 	"database/sql"
 	"errors"
 	"time"
-	"videoapp/proto"
-	"videoapp/server/common"
-	sqlc "videoapp/sql"
-	"videoapp/utils"
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/mattn/go-sqlite3"
 	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"videoapp/proto"
+	"videoapp/server/common"
+	sqlc "videoapp/sql"
+	"videoapp/utils"
 )
 
 type userServer struct {
@@ -71,4 +73,57 @@ func (s *userServer) Verify(ctx context.Context, req *proto.VerifyRequest) (*pro
 	}
 	err = executor.SetUserFlag(ctx, sqlc.SetUserFlagParams{ID: user.ID, Flags: user.Flags | int32(FlagVerified)})
 	return &proto.Empty{}, common.ErrInternal(err)
+}
+func (s *userServer) Follow(ctx context.Context, req *proto.FollowRequest) (*proto.Empty, error) {
+	return &proto.Empty{}, common.ErrInternal(executor.FollowUser(ctx, sqlc.FollowUserParams{Token: req.Session, UserID: req.IdToFollow}))
+}
+func (s *userServer) Unfollow(ctx context.Context, req *proto.FollowRequest) (*proto.Empty, error) {
+	return &proto.Empty{}, common.ErrInternal(executor.UnfollowUser(ctx, sqlc.UnfollowUserParams{Token: req.Session, UserID: req.IdToFollow}))
+}
+func (s *userServer) GetFollowers(ctx context.Context, req *proto.GetFollowsRequest) (*proto.FollowUsers, error) {
+	follows, err := executor.GetUserFollowers(ctx, sqlc.GetUserFollowersParams{UserID: req.UserId, Limit: 10, Offset: req.Page * 10})
+	if err != nil {
+		return nil, common.ErrInternal(err)
+	}
+	followsProto := make([]*proto.FollowUser, len(follows))
+	for i := range follows {
+		followsProto[i] = &proto.FollowUser{UserId: follows[i].UserID, CreatedAt: timestamppb.New(follows[i].CreatedAt.Time), Username: follows[i].Username.String}
+	}
+	return &proto.FollowUsers{Users: followsProto}, nil
+}
+func (s *userServer) GetFollowing(ctx context.Context, req *proto.GetFollowsRequest) (*proto.FollowUsers, error) {
+	follows, err := executor.GetUserFollows(ctx, sqlc.GetUserFollowsParams{FollowerID: req.UserId, Limit: 10, Offset: req.Page * 10})
+	if err != nil {
+		return nil, common.ErrInternal(err)
+	}
+	followsProto := make([]*proto.FollowUser, len(follows))
+	for i := range follows {
+		followsProto[i] = &proto.FollowUser{UserId: follows[i].UserID, CreatedAt: timestamppb.New(follows[i].CreatedAt.Time), Username: follows[i].Username.String}
+	}
+	return &proto.FollowUsers{Users: followsProto}, nil
+}
+func (s *userServer) Get(ctx context.Context, req *proto.UsersGetRequest) (*proto.UsersGetResponse, error) {
+	user, err := executor.GetUser(ctx, req.Username)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, common.ErrUserNotFound
+	} else if err != nil {
+		return nil, common.ErrInternal(err)
+	}
+
+	var isFollowing bool
+	if req.Session != "" {
+		f, _ := executor.IsFollowing(ctx, sqlc.IsFollowingParams{UserID: user.ID, Token: req.Session})
+		isFollowing = f == 1
+	}
+	return &proto.UsersGetResponse{
+		User: &proto.User{
+			Id:             user.ID,
+			Email:          user.Email,
+			Username:       user.Username,
+			CreatedAt:      timestamppb.New(user.CreatedAt.Time),
+			Flags:          uint64(user.Flags),
+			FollowerCount:  user.FollowerCount,
+			FollowingCount: user.FollowingCount},
+		IsFollowing: isFollowing,
+	}, nil
 }

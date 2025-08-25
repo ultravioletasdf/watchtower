@@ -4,19 +4,36 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"videoapp/clients/htmx/frontend"
-	"videoapp/proto"
-	"videoapp/server/common"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"google.golang.org/grpc/status"
+
+	"videoapp/clients/htmx/frontend"
+	"videoapp/proto"
+	"videoapp/server/common"
 )
 
 func profile(c *fiber.Ctx) error {
-	res, err := deps.Clients.Videos.GetUserVideos(ctx, &proto.GetUserVideosRequest{Session: c.Cookies("session")})
-	if err == nil {
-		return Render(c, frontend.Profile(res.Videos))
+
+	session := c.Cookies("session")
+	username := c.Params("username")
+
+	old := time.Now()
+	user, err := deps.Clients.Users.Get(c.Context(), &proto.UsersGetRequest{Session: session, Username: username})
+	fmt.Printf("Users:Get took %v\n", time.Since(old))
+	if err != nil {
+		err := status.Convert(err)
+		if errors.Is(err.Err(), common.ErrUserNotFound) {
+			return c.SendStatus(404)
+		}
+		return c.Status(fiber.StatusInternalServerError).SendString("Internal Error:" + err.Err().Error())
 	}
+	res, err := deps.Clients.Videos.GetUserVideos(c.Context(), &proto.GetUserVideosRequest{Id: user.User.Id})
+	if err == nil {
+		return Render(c, frontend.Profile(getUser(c), res.Videos, user))
+	}
+
 	status, ok := status.FromError(err)
 	if ok && errors.Is(status.Err(), common.ErrSessionNotFound) || errors.Is(status.Err(), common.ErrSessionWrongSize) {
 		c.ClearCookie("session")
@@ -38,9 +55,42 @@ func getStages(c *fiber.Ctx) error {
 			return c.SendStatus(fiber.StatusBadRequest)
 		}
 	}
-	res, err := deps.Clients.Videos.GetStages(ctx, &proto.VideosGetStagesRequest{Ids: idInts})
+	res, err := deps.Clients.Videos.GetStages(c.Context(), &proto.VideosGetStagesRequest{Ids: idInts})
 	if shouldReturn := unwrapGrpcError(c, err, 400); shouldReturn {
 		return nil
 	}
 	return c.SendString(res.Result)
+}
+
+// Handles both followers and follows
+func getFollowsModal(c *fiber.Ctx) error {
+	idString := c.Params("id")
+	id, err := strconv.ParseInt(idString, 10, 0)
+	if err != nil {
+		return c.SendString("Invalid id")
+	}
+
+	pageString := c.Query("page", "0")
+	page, err := strconv.Atoi(pageString)
+	if err != nil {
+		return c.SendString("Invalid page")
+	}
+
+	var result *proto.FollowUsers
+	reqType := c.Params("type")
+	switch reqType {
+	case "followers":
+		result, err = deps.Clients.Users.GetFollowers(c.Context(), &proto.GetFollowsRequest{UserId: id, Page: int32(page)})
+	case "follows":
+		result, err = deps.Clients.Users.GetFollowing(c.Context(), &proto.GetFollowsRequest{UserId: id, Page: int32(page)})
+	}
+
+	if err != nil {
+		return c.SendString("There was an error: " + status.Convert(err).Message())
+	}
+	// Use to test infinite scrolling
+	// for range 10 {
+	// 	result.Users = append(result.Users, &proto.FollowUser{UserId: 1, CreatedAt: timestamppb.Now(), Username: "demo user"})
+	// }
+	return Render(c, frontend.FollowUserList(result, id, reqType, page+1))
 }

@@ -45,7 +45,7 @@ func formatDate(epoch int64) string {
 
 		switch {
 		case minutes < 1:
-			return "just now"
+			return "Just now"
 		case minutes < 60:
 			return pluralize(minutes, "minute")
 		case hours < 24:

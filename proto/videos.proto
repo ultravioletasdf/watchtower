@@ -47,7 +47,7 @@ message VideosCreateResponse {
   int64 id = 1;
 }
 message GetUserVideosRequest {
-  string session = 1;
+  int64 id = 1;
 }
 message GetUserVideosResponse {
   repeated GetUserVideosResponseVideo videos = 1;

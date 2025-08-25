@@ -4,11 +4,11 @@ import "videoapp/proto"
 import "fmt"
 import "github.com/dimmerz92/go-lucide-icons/pkg/templ/icons"
 
-templ ViewVideo(video *proto.GetVideoResponse) {
+templ ViewVideo(user *proto.User, video *proto.GetVideoResponse) {
 	<link rel="stylesheet" href="https://cdn.vidstack.io/player/theme.css"/>
 	<link rel="stylesheet" href="https://cdn.vidstack.io/player/video.css"/>
 	<script src="https://cdn.vidstack.io/player" type="module"></script>
-	@AppLayout() {
+	@AppLayout(user) {
 		{ video.Title }
 		{ video.CreatedAt }
 		@VideoStatusPoller(video)

@@ -21,6 +21,12 @@ JOIN videos v ON s.user_id = v.user_id
 WHERE s.token = $1
 ORDER BY v.created_at DESC;
 
+-- name: GetUserVideos :many
+SELECT id, title, visibility, created_at, thumbnail_id, stage
+FROM videos
+WHERE user_id = $1
+ORDER BY created_at DESC;
+
 -- name: GetVideo :one
 SELECT * FROM videos
 WHERE id = $1;

@@ -4,13 +4,14 @@ import (
 	"context"
 	"flag"
 	"log"
-	"videoapp/queues"
-	sqlc "videoapp/sql"
-	"videoapp/utils"
 
 	"github.com/joho/godotenv"
 	"github.com/minio/minio-go/v7"
 	amqp "github.com/rabbitmq/amqp091-go"
+
+	"videoapp/queues"
+	sqlc "videoapp/sql"
+	"videoapp/utils"
 )
 
 var cfg utils.Config

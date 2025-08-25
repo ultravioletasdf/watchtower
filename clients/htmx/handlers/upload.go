@@ -3,15 +3,17 @@ package handlers
 import (
 	"fmt"
 	"strconv"
-	"videoapp/clients/htmx/frontend"
-	"videoapp/proto"
 
 	"github.com/gofiber/fiber/v2"
 	"google.golang.org/grpc/status"
+
+	"videoapp/clients/htmx/frontend"
+	"videoapp/proto"
 )
 
 func upload(c *fiber.Ctx) error {
-	return Render(c, frontend.Upload())
+	user := getUser(c)
+	return Render(c, frontend.Upload(user))
 }
 
 // Endpoint to get a presigned post request
@@ -30,7 +32,7 @@ func uploadVideo(c *fiber.Ctx) error {
 }
 
 func afterUpload(c *fiber.Ctx) error {
-	return Render(c, frontend.AfterUpload(c.Params("id")))
+	return Render(c, frontend.AfterUpload(getUser(c), c.Params("id")))
 }
 func uploadThumbnail(c *fiber.Ctx) error {
 	upload, err := deps.Clients.Thumbnails.CreateUpload(ctx, &proto.CreateUploadRequest{Session: c.Cookies("session")})

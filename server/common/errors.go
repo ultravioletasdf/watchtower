@@ -11,6 +11,7 @@ var (
 	ErrInvalidEmail          = status.Error(codes.InvalidArgument, "Email is formatted incorrectly")
 	ErrEmailTaken            = status.Error(codes.AlreadyExists, "Email is taken")
 	ErrUserWithEmailNotFound = status.Error(codes.NotFound, "User with that email was not found")
+	ErrUserNotFound          = status.Error(codes.NotFound, "That user was not found")
 
 	ErrInvalidUsername   = status.Error(codes.InvalidArgument, "Username is formatted incorrectly")
 	ErrUsernameTaken     = status.Error(codes.AlreadyExists, "Username is taken")

@@ -1,17 +1,23 @@
 package frontend
 
-import "github.com/dimmerz92/go-lucide-icons/pkg/templ/icons"
+import (
+	"fmt"
 
-templ Home() {
-	@AppLayout() {
+	"videoapp/proto"
+
+	"github.com/dimmerz92/go-lucide-icons/pkg/templ/icons"
+)
+
+templ Home(user *proto.User) {
+	@AppLayout(user) {
 		Hello
 	}
 }
 
-templ AppLayout() {
+templ AppLayout(user *proto.User) {
 	@Base() {
 		<div class="flex flex-col h-full">
-			@Nav()
+			@Nav(user)
 			@Sidebar() {
 				{ children... }
 			}
@@ -19,7 +25,7 @@ templ AppLayout() {
 	}
 }
 
-templ Nav() {
+templ Nav(user *proto.User) {
 	<div class="bg-base-200 flex w-full flex-shrink items-center justify-between px-8 py-4">
 		<div class="flex items-center gap-2 font-bold select-none">
 			<svg class="size-6" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -49,28 +55,38 @@ templ Nav() {
 		<div class="dropdown dropdown-end select-none cursor-pointer">
 			<div tabindex="0" role="button" class="avatar avatar-placeholder">
 				<div class="bg-neutral text-neutral-content w-8 rounded-full">
-					<span class="text-xs font-bold">UV</span>
+					<span class="text-xs font-bold">@icons.UserRound(icons.IconProps{Class: "size-4"})
+</span>
 				</div>
 			</div>
 			<ul class="dropdown-content menu bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm">
-				<li tabindex="0">
-					<a href="/profile">
-						@icons.User(icons.IconProps{Class: "size-4"})
-						Profile
-					</a>
-				</li>
-				<li tabindex="0">
-					<a href="/upload">
-						@icons.Upload(icons.IconProps{Class: "size-4"})
-						Upload
-					</a>
-				</li>
-				<li tabindex="0">
-					<a href="/sign/out">
-						@icons.LogOut(icons.IconProps{Class: "size-4"})
-						Sign  Out
-					</a>
-				</li>
+				if user == nil {
+					<li tabindex="0">
+						<a href="/sign/in">
+							@icons.LogIn(icons.IconProps{Class: "size-4"})
+							Sign In
+						</a>
+					</li>
+				} else {
+					<li tabindex="0">
+						<a href={ fmt.Sprintf("/user/%s", user.Username) }>
+							@icons.User(icons.IconProps{Class: "size-4"})
+							Profile
+						</a>
+					</li>
+					<li tabindex="0">
+						<a href="/upload">
+							@icons.Upload(icons.IconProps{Class: "size-4"})
+							Upload
+						</a>
+					</li>
+					<li tabindex="0">
+						<a href="/sign/out">
+							@icons.LogOut(icons.IconProps{Class: "size-4"})
+							Sign  Out
+						</a>
+					</li>
+				}
 			</ul>
 		</div>
 	</div>

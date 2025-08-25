@@ -2,10 +2,11 @@ package handlers
 
 import (
 	"strconv"
-	"videoapp/clients/htmx/frontend"
-	"videoapp/proto"
 
 	"github.com/gofiber/fiber/v2"
+
+	"videoapp/clients/htmx/frontend"
+	"videoapp/proto"
 )
 
 func viewVideo(c *fiber.Ctx) error {
@@ -18,7 +19,7 @@ func viewVideo(c *fiber.Ctx) error {
 	if shouldReturn := unwrapGrpcError(c, err, 500); shouldReturn {
 		return nil
 	}
-	return Render(c, frontend.ViewVideo(v))
+	return Render(c, frontend.ViewVideo(getUser(c), v))
 }
 func videoStatus(c *fiber.Ctx) error {
 	id, err := strconv.ParseInt(c.Params("id"), 10, 0)

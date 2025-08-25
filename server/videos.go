@@ -7,14 +7,15 @@ import (
 	"log"
 	"strconv"
 	"time"
-	"videoapp/proto"
-	"videoapp/server/common"
-	sqlc "videoapp/sql"
-	"videoapp/utils"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/rabbitmq/amqp091-go"
 	protobuf "google.golang.org/protobuf/proto"
+
+	"videoapp/proto"
+	"videoapp/server/common"
+	sqlc "videoapp/sql"
+	"videoapp/utils"
 )
 
 type videoService struct {
@@ -100,11 +101,7 @@ func (s *videoService) Create(ctx context.Context, req *proto.VideosCreateReques
 	return &proto.VideosCreateResponse{Id: id.Int64()}, nil
 }
 func (s *videoService) GetUserVideos(ctx context.Context, req *proto.GetUserVideosRequest) (*proto.GetUserVideosResponse, error) {
-	if len(req.Session) != SESSION_TOKEN_LENGTH {
-		return nil, common.ErrSessionWrongSize
-	}
-
-	res, err := executor.GetVideosFromSession(ctx, req.Session)
+	res, err := executor.GetUserVideos(ctx, req.Id)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, common.ErrNoVideosFound
 	}
