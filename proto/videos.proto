@@ -1,17 +1,18 @@
 syntax = "proto3";
 
-package videos;
+package watchtower;
 
 option go_package = "videoapp/proto";
 
 service Videos {
-  rpc CreateUpload(CreateUploadRequest) returns (CreateUploadResponse) {}
-  rpc Create(VideosCreateRequest) returns (VideosCreateResponse) {}
-  rpc GetUserVideos(GetUserVideosRequest) returns (GetUserVideosResponse) {}
-  rpc Get(GetVideoRequest) returns (GetVideoResponse) {}
-  rpc GetStage(VideosGetStageRequest) returns (VideosGetStageResponse) {}
-  rpc GetStages(VideosGetStagesRequest) returns (VideosGetStagesResponse) {}
-  rpc Delete(DeleteVideoRequest) returns (DeleteVideoResponse) {}
+  rpc CreateUpload(CreateUploadRequest) returns (CreateUploadResponse);
+  rpc Create(VideosCreateRequest) returns (VideosCreateResponse);
+  rpc GetUserVideos(GetUserVideosRequest) returns (GetUserVideosResponse);
+  rpc Get(GetVideoRequest) returns (GetVideoResponse);
+  rpc GetUserFollowingVideos(GetUserFollowingVideosRequest) returns (GetUserFollowingVideosRequest);
+  rpc GetStage(VideosGetStageRequest) returns (VideosGetStageResponse);
+  rpc GetStages(VideosGetStagesRequest) returns (VideosGetStagesResponse);
+  rpc Delete(DeleteVideoRequest) returns (DeleteVideoResponse);
 }
 message VideosGetStageRequest {
   string session = 1;
@@ -65,18 +66,20 @@ message DeleteVideoRequest {
   string session = 1;
   int64 video_id = 2;
 }
-message DeleteVideoResponse {}
+message DeleteVideoResponse {};
 
+message GetUserFollowingVideosRequest {};
+message GetUserFollowingVideosResponse {};
 service Thumbnails {
-  rpc CreateUpload(CreateUploadRequest) returns (CreateUploadResponse) {}
-  rpc Process(ThumbnailsProcessRequest) returns (ThumbnailsProcessResponse) {}
+  rpc CreateUpload(CreateUploadRequest) returns (CreateUploadResponse);
+  rpc Process(ThumbnailsProcessRequest) returns (ThumbnailsProcessResponse);
 }
 
 message ThumbnailsProcessRequest {
   string session = 1;
   int64 id = 2;
 }
-message ThumbnailsProcessResponse {}
+message ThumbnailsProcessResponse {};
 
 message GetVideoRequest {
   string session = 1;

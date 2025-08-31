@@ -8,11 +8,10 @@ INSERT INTO
         title,
         description,
         visibility,
-        stage,
-        created_at
+        stage
     )
 VALUES
-    ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP);
+    ($1, $2, $3, $4, $5, $6, $7, $8);
 
 -- name: GetVideosFromSession :many
 SELECT v.id, v.title, v.visibility, v.created_at, v.thumbnail_id, v.stage
@@ -44,3 +43,10 @@ LIMIT 1;
 SELECT json_object_agg(id, stage)
 FROM videos
 WHERE id = ANY(sqlc.arg(ids)::bigint[]);
+
+-- name: GetUsersFollowingVideos :many
+SELECT v.* 
+FROM videos as v
+JOIN follows as f
+ON v.user_id = f.user_id
+WHERE f.follower_id = $1;

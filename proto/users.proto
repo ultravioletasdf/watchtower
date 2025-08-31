@@ -1,29 +1,27 @@
 syntax = "proto3";
 
-option go_package = "videoapp/proto";
+package watchtower;
 
-package users;
+option go_package = "videoapp/proto";
 
 import "google/protobuf/timestamp.proto";
 
 service Users {
-  rpc Create(CreateRequest) returns (CreateResponse) {}
-  rpc Verify(VerifyRequest) returns (Empty) {}
-  rpc Follow(FollowRequest) returns (Empty) {}
-  rpc Unfollow(FollowRequest) returns (Empty) {}
-  rpc Get(UsersGetRequest) returns (UsersGetResponse) {}
-  rpc GetFollowers(GetFollowsRequest) returns (FollowUsers) {}
-  rpc GetFollowing(GetFollowsRequest) returns (FollowUsers) {}
+  rpc Create(CreateRequest) returns (CreateResponse);
+  rpc Verify(VerifyRequest) returns (Empty);
+  rpc Follow(FollowRequest) returns (Empty);
+  rpc Unfollow(FollowRequest) returns (Empty);
+  rpc Get(UsersGetRequest) returns (UsersGetResponse);
+  rpc GetFollowers(GetFollowsRequest) returns (FollowUsers);
+  rpc GetFollowing(GetFollowsRequest) returns (FollowUsers);
 }
-message Empty {}
+message Empty {};
 message CreateRequest {
-    string email = 1;
-    string username = 2;
-    string password = 3;
+  string email = 1;
+  string username = 2;
+  string password = 3;
 }
-message CreateResponse {
-    uint64 id = 1;
-}
+message CreateResponse { uint64 id = 1; }
 message VerifyRequest {
   string session = 1;
   int32 code = 2;
@@ -44,18 +42,16 @@ message GetFollowsRequest {
   int64 user_id = 1;
   int32 page = 2;
 }
-message FollowUsers {
-  repeated FollowUser users = 1;
-}
+message FollowUsers { repeated FollowUser users = 1; }
 message FollowUser {
   int64 user_id = 1;
   google.protobuf.Timestamp created_at = 2;
   string username = 3;
 }
 service Sessions {
-  rpc Create(Crededentials) returns (Session){}
-  rpc GetUser(Session) returns (User){}
-  rpc Delete(Session) returns (Empty){}
+  rpc Create(Crededentials) returns (Session) {}
+  rpc GetUser(Session) returns (User) {}
+  rpc Delete(Session) returns (Empty) {}
 }
 message User {
   int64 id = 1;
@@ -70,6 +66,4 @@ message Crededentials {
   string email = 1;
   string password = 2;
 }
-message Session {
-  string token = 1;
-}
+message Session { string token = 1; }

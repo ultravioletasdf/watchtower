@@ -37,7 +37,7 @@ videos (
     description varchar(1000) NOT NULL,
     visibility int NOT NULL DEFAULT 0,
     stage int NOT NULL,
-    created_at timestamptz NOT NULL
+    created_at timestamptz NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE follows (
