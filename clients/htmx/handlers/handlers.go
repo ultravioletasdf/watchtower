@@ -49,6 +49,8 @@ func Add(app *fiber.App, dependencies Dependencies) {
 	app.Get("/videos/:id", viewVideo)
 	app.Get("/status/:id", videoStatus)
 
+	app.Get("/following", following)
+
 	app.Get("/upload", upload)
 	app.Post("/upload/video", uploadVideo)
 	app.Get("/upload/:id", afterUpload)

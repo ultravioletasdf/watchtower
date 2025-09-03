@@ -17,7 +17,7 @@ CREATE TABLE
 sessions (
     token char(32) PRIMARY KEY,
     user_id bigint NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    created_at timestamptz NOT NULL
+    created_at timestamptz NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE

@@ -1,8 +1,8 @@
 -- name: CreateSession :exec
 INSERT INTO
-    sessions (token, user_id, created_at)
+    sessions (token, user_id)
 VALUES
-    ($1, $2, CURRENT_TIMESTAMP);
+    ($1, $2);
 -- name: DeleteSession :exec
 DELETE FROM sessions WHERE token = $1;
 -- name: GetUserFromSession :one

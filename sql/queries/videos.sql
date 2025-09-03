@@ -49,4 +49,9 @@ SELECT v.*
 FROM videos as v
 JOIN follows as f
 ON v.user_id = f.user_id
-WHERE f.follower_id = $1;
+WHERE f.follower_id = $1
+AND v.stage = 3
+
+ORDER BY v.id DESC
+LIMIT 10
+OFFSET $2;

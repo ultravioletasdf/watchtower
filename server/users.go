@@ -127,3 +127,16 @@ func (s *userServer) Get(ctx context.Context, req *proto.UsersGetRequest) (*prot
 		IsFollowing: isFollowing,
 	}, nil
 }
+
+func (s *userServer) GetFollowingVideos(ctx context.Context, req *proto.GetFollowingVideosRequest) (*proto.GetFollowingVideosResponse, error) {
+	videos, err := executor.GetUsersFollowingVideos(ctx, sqlc.GetUsersFollowingVideosParams{FollowerID: req.UserId, Offset: req.Page * 10})
+	if err != nil {
+		return nil, common.ErrInternal(err)
+	}
+
+	result := make([]*proto.Video, len(videos))
+	for i, v := range videos {
+		result[i] = &proto.Video{Id: v.ID, Title: v.Title, Visibility: proto.Visibility(v.Visibility), CreatedAt: timestamppb.New(v.CreatedAt.Time), ThumbnailId: v.ThumbnailID, Stage: proto.Stage(v.Stage), UserId: v.UserID}
+	}
+	return &proto.GetFollowingVideosResponse{Videos: result}, nil
+}

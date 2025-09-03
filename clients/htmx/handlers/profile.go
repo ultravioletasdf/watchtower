@@ -15,7 +15,6 @@ import (
 )
 
 func profile(c *fiber.Ctx) error {
-
 	session := c.Cookies("session")
 	username := c.Params("username")
 
