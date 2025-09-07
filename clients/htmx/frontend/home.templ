@@ -53,13 +53,21 @@ templ Nav(user *proto.User) {
 			WatchTower
 		</div>
 		<div class="dropdown dropdown-end select-none cursor-pointer">
-			<div tabindex="0" role="button" class="avatar avatar-placeholder">
-				<div class="bg-neutral text-neutral-content w-8 rounded-full">
-					<span class="text-xs font-bold">@icons.UserRound(icons.IconProps{Class: "size-4"})
-</span>
+			<div tabindex="0" role="button" class="avatar" x-data="{ image_found: true }">
+				<div class="w-8 rounded-full bg-base-300 flex! items-center justify-center">
+					<template x-if="image_found">
+						<img
+							id="avatar_preview"
+							src={ fmt.Sprintf("http://localhost:9000/avatars/%d.webp", user.Id) }
+							@error="image_found = false"
+						/>
+					</template>
+					<template x-if="!image_found">
+						@icons.UserRound(icons.IconProps{Class: "size-4"})
+					</template>
 				</div>
 			</div>
-			<ul class="dropdown-content menu bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm">
+			<ul class="dropdown-content menu bg-base-300 rounded-box z-1 w-52 p-2 shadow-sm ">
 				if user == nil {
 					<li tabindex="0">
 						<a href="/sign/in">
@@ -68,6 +76,12 @@ templ Nav(user *proto.User) {
 						</a>
 					</li>
 				} else {
+					<li tabindex="0">
+						<a class="group" href="/settings">
+							@icons.Cog(icons.IconProps{Class: "size-4 transition-transform duration-750 group-hover:rotate-180"})
+							Settings
+						</a>
+					</li>
 					<li tabindex="0">
 						<a href={ fmt.Sprintf("/user/%s", user.Username) }>
 							@icons.User(icons.IconProps{Class: "size-4"})
@@ -109,7 +123,7 @@ templ Sidebar() {
 				</a>
 			}
 		</div>
-		<div class="grow p-8">
+		<div class="grow flex flex-col p-8">
 			{ children... }
 		</div>
 	</div>

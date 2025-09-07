@@ -29,12 +29,30 @@ templ Profile(viewingUser *proto.User, videos []*proto.GetUserVideosResponseVide
 		})
 	</script>
 	@AppLayout(viewingUser) {
-		Profile
-		<div class="flex text-sm items-center gap-2 mb-2">
-			<span>{ "@" + user.User.Username }</span>
-			<button class="opacity-70 cursor-pointer hover:opacity-100" onclick="following.showModal()">{ formatCount(user.User.FollowingCount, "Following", false) }</button>
-			<button class="opacity-70 cursor-pointer hover:opacity-100" onclick="followers.showModal()">{ formatCount(user.User.FollowerCount, "Follower", true) }</button>
-			// Hide option to follow yourself
+		<div class="flex text-sm items-center gap-2">
+			<div class="avatar" x-data="{ image_found: true }">
+				<div class="w-16 rounded-full bg-base-300 flex! items-center justify-center">
+					<template x-if="image_found">
+						<img
+							id="avatar_preview"
+							src={ fmt.Sprintf("http://localhost:9000/avatars/%d.webp", user.User.Id) }
+							@error="image_found = false"
+						/>
+					</template>
+					<template x-if="!image_found">
+						@icons.UserRound(icons.IconProps{Class: "size-6"})
+					</template>
+				</div>
+			</div>
+			<div class="flex flex-col">
+				<div class="font-bold text-lg leading-tight">Placeholder Display Name</div>
+				<div class="flex gap-2 items-center">
+					<span>{ "@" + user.User.Username }</span>
+					<button class="opacity-70 cursor-pointer hover:opacity-100" onclick="following.showModal()">{ formatCount(user.User.FollowingCount, "Following", false) }</button>
+					<button class="opacity-70 cursor-pointer hover:opacity-100" onclick="followers.showModal()">{ formatCount(user.User.FollowerCount, "Follower", true) }</button>
+					// Hide option to follow yourself
+				</div>
+			</div>
 			if viewingUser == nil || (viewingUser != nil && viewingUser.Id != user.User.Id) {
 				if user.IsFollowing {
 					@ButtonUnfollow(user.User.Id)
@@ -145,7 +163,21 @@ templ FollowUserList(users *proto.FollowUsers, id int64, t string, page int) {
 				hx-swap="afterend"
 			}
 		>
-			<li class="list-row">
+			<li class="list-row items-center gap-2">
+				<div class="avatar size-8" x-data="{ image_found: true }">
+					<div class="size-8 rounded-full bg-base-300 flex! items-center justify-center">
+						<template x-if="image_found">
+							<img
+								id="avatar_preview"
+								src={ fmt.Sprintf("http://localhost:9000/avatars/%d.webp", user.UserId) }
+								@error="image_found = false"
+							/>
+						</template>
+						<template x-if="!image_found">
+							@icons.UserRound(icons.IconProps{Class: "size-4"})
+						</template>
+					</div>
+				</div>
 				<div>
 					{ user.Username }
 					<div class="opacity-60 text-xs">{ formatDate(user.CreatedAt.Seconds) }</div>

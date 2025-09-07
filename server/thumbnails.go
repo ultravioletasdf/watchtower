@@ -5,16 +5,15 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
-	"log"
 	"strconv"
 	"time"
+
+	"github.com/minio/minio-go/v7"
+
 	"videoapp/proto"
 	"videoapp/server/common"
 	sqlc "videoapp/sql"
 	"videoapp/vips"
-
-	"github.com/minio/minio-go/v7"
 )
 
 type thumbnailsServer struct {
@@ -73,7 +72,6 @@ func (s *thumbnailsServer) Process(ctx context.Context, req *proto.ThumbnailsPro
 	idString := strconv.FormatInt(req.Id, 10)
 	obj, err := s3.GetObject(ctx, "staging-thumbnails", idString, minio.GetObjectOptions{})
 	if err != nil {
-		log.Println("errhere")
 		return nil, common.ErrInternal(err)
 	}
 	source := vips.NewSource(obj)
@@ -93,7 +91,6 @@ func (s *thumbnailsServer) Process(ctx context.Context, req *proto.ThumbnailsPro
 	}
 	_, err = s3.PutObject(ctx, "thumbnails", idString+".webp", buf, int64(buf.Len()), minio.PutObjectOptions{})
 	if err != nil {
-		fmt.Println("errhere2")
 		return nil, common.ErrInternal(err)
 	}
 

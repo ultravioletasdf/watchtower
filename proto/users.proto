@@ -15,16 +15,22 @@ service Users {
   rpc Get(UsersGetRequest) returns (UsersGetResponse);
   rpc GetFollowers(GetFollowsRequest) returns (FollowUsers);
   rpc GetFollowing(GetFollowsRequest) returns (FollowUsers);
-  rpc GetFollowingVideos(GetFollowingVideosRequest) returns (GetFollowingVideosResponse);
+  rpc GetFollowingVideos(GetFollowingVideosRequest)
+      returns (GetFollowingVideosResponse);
+  rpc UploadAvatar(UploadAvatarRequest) returns (Empty);
+  rpc RemoveAvatar(Session) returns (Empty);
+}
+
+message UploadAvatarRequest {
+  string session = 1;
+  bytes data = 2;
 }
 
 message GetFollowingVideosRequest {
   int64 user_id = 1;
   int32 page = 2;
 }
-message GetFollowingVideosResponse {
-  repeated Video videos = 1;
-}
+message GetFollowingVideosResponse { repeated Video videos = 1; }
 message Video {
   int64 id = 1;
   string title = 2;

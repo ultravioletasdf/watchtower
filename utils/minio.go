@@ -14,7 +14,7 @@ func ConnectS3(cfg Config) *minio.Client {
 		log.Fatalf("failed to connect to minio: %v", err)
 	}
 
-	buckets := []string{"staging", "videos", "thumbnails", "staging-thumbnails"}
+	buckets := []string{"staging", "videos", "thumbnails", "staging-thumbnails", "avatars"}
 
 	for _, bucket := range buckets {
 		exists, err := s3.BucketExists(context.Background(), bucket)

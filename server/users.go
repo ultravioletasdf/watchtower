@@ -1,13 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/mattn/go-sqlite3"
+	"github.com/minio/minio-go/v7"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -15,6 +18,7 @@ import (
 	"videoapp/server/common"
 	sqlc "videoapp/sql"
 	"videoapp/utils"
+	"videoapp/vips"
 )
 
 type userServer struct {
@@ -139,4 +143,47 @@ func (s *userServer) GetFollowingVideos(ctx context.Context, req *proto.GetFollo
 		result[i] = &proto.Video{Id: v.ID, Title: v.Title, Visibility: proto.Visibility(v.Visibility), CreatedAt: timestamppb.New(v.CreatedAt.Time), ThumbnailId: v.ThumbnailID, Stage: proto.Stage(v.Stage), UserId: v.UserID}
 	}
 	return &proto.GetFollowingVideosResponse{Videos: result}, nil
+}
+
+func (s *userServer) UploadAvatar(ctx context.Context, req *proto.UploadAvatarRequest) (*proto.Empty, error) {
+	user, err := executor.GetUserFromSession(ctx, req.Session)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, common.ErrSessionNotFound
+	} else if err != nil {
+		return nil, common.ErrInternal(err)
+	}
+
+	img, err := vips.NewImageFromBuffer(req.Data, vips.DefaultLoadOptions())
+	if err != nil {
+		return nil, common.ErrInvalidImage
+	}
+	defer img.Close()
+
+	err = img.ThumbnailImage(512, &vips.ThumbnailImageOptions{Height: 512, Size: vips.SizeBoth, Crop: vips.InterestingAttention})
+	if err != nil {
+		return nil, common.ErrInvalidImage
+	}
+
+	buf := &writeCloser{bytes.NewBuffer(nil)}
+	target := vips.NewTarget(buf)
+	err = img.WebpsaveTarget(target, vips.DefaultWebpsaveTargetOptions())
+	if err != nil {
+		return nil, common.ErrInternal(err)
+	}
+	_, err = s3.PutObject(ctx, "avatars", fmt.Sprintf("%d.webp", user.ID), buf, int64(buf.Len()), minio.PutObjectOptions{})
+	if err != nil {
+		return nil, common.ErrInternal(err)
+	}
+	return &proto.Empty{}, nil
+}
+
+func (s *userServer) RemoveAvatar(ctx context.Context, req *proto.Session) (*proto.Empty, error) {
+	user, err := executor.GetUserFromSession(ctx, req.Token)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, common.ErrSessionNotFound
+	} else if err != nil {
+		return nil, common.ErrInternal(err)
+	}
+	err = s3.RemoveObject(ctx, "avatars", fmt.Sprintf("%d.webp", user.ID), minio.RemoveObjectOptions{})
+	return nil, common.ErrInternal(err)
 }

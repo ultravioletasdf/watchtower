@@ -39,6 +39,10 @@ func Add(app *fiber.App, dependencies Dependencies) {
 	app.Post("/sign/up", postSignUp)
 	app.Get("/sign/out", signOut)
 
+	app.Get("/settings", settings)
+	app.Post("/avatar", uploadAvatar)
+	app.Delete("/avatar", deleteAvatar)
+
 	app.Get("/user/:username", profile)
 	app.Get("/user/:id/:type", getFollowsModal)
 	app.Post("/stages", getStages)

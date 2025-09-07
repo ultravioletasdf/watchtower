@@ -34,6 +34,7 @@ var (
 	ErrVideoNotFound = status.Error(codes.NotFound, "The specified video was not found")
 
 	ErrUnauthorized = status.Error(codes.PermissionDenied, "You do not have authorization to do that")
+	ErrInvalidImage = status.Error(codes.InvalidArgument, "We couldn't process the image you provided")
 )
 
 func ErrInternal(err error) error {

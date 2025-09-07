@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -9,6 +11,7 @@ import (
 
 	"videoapp/clients/htmx/frontend"
 	"videoapp/proto"
+	"videoapp/server/common"
 )
 
 func upload(c *fiber.Ctx) error {
@@ -59,6 +62,55 @@ func processThumbnail(c *fiber.Ctx) error {
 	_, err = deps.Clients.Thumbnails.Process(ctx, &proto.ThumbnailsProcessRequest{Id: idInt, Session: c.Cookies("session")})
 	if shouldReturn := unwrapGrpcError(c, err, 400); shouldReturn {
 		return nil
+	}
+	return c.SendStatus(200)
+}
+
+func uploadAvatar(c *fiber.Ctx) error {
+	session := c.Cookies("session")
+	if session == "" {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+	formFile, err := c.FormFile("file")
+	if err != nil {
+		return c.SendStatus(fiber.StatusBadRequest)
+	}
+	file, err := formFile.Open()
+	if err != nil {
+		return c.SendStatus(fiber.StatusBadRequest)
+	}
+	defer file.Close()
+
+	data, err := io.ReadAll(file)
+	if err != nil {
+		return c.SendStatus(fiber.StatusBadRequest)
+	}
+
+	_, err = deps.Clients.Users.UploadAvatar(c.Context(), &proto.UploadAvatarRequest{Session: session, Data: data})
+	if err != nil {
+		status := status.Convert(err)
+		if errors.Is(status.Err(), common.ErrSessionNotFound) {
+			return c.SendStatus(fiber.StatusUnauthorized)
+		} else if errors.Is(status.Err(), common.ErrInvalidImage) {
+			fmt.Println(status.Message())
+			return c.SendStatus(fiber.StatusBadRequest)
+		}
+		return c.Status(fiber.StatusInternalServerError).SendString(status.String())
+	}
+	return c.SendStatus(200)
+}
+func deleteAvatar(c *fiber.Ctx) error {
+	session := c.Cookies("session")
+	if session == "" {
+		return c.SendStatus(fiber.StatusUnauthorized)
+	}
+	_, err := deps.Clients.Users.RemoveAvatar(c.Context(), &proto.Session{Token: session})
+	if err != nil {
+		status := status.Convert(err)
+		if errors.Is(status.Err(), common.ErrSessionNotFound) {
+			return c.SendStatus(fiber.StatusUnauthorized)
+		}
+		return c.Status(fiber.StatusInternalServerError).SendString(status.String())
 	}
 	return c.SendStatus(200)
 }
