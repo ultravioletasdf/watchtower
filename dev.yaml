@@ -1,0 +1,31 @@
+services:
+    minio:
+        cmd: minio server ../tmp/minio
+    compose:
+        cmd: docker compose -f ./build/dev.docker-compose.yaml up
+        wait_for:
+            - "localhost:9000"
+    video_analyser:
+        cmd: cd cmd/queues/video_analyser && air
+        wait_for:
+            - "amqp://dev:dev@127.0.0.1:5672"
+    transcoder:
+        cmd: cd cmd/queues/transcoder && air
+        wait_for:
+            - "amqp://dev:dev@127.0.0.1:5672"
+    thumbnail_generator:
+        cmd: cd cmd/queues/thumbnail_generator && air
+        wait_for:
+            - "amqp://dev:dev@127.0.0.1:5672"
+    api:
+        cmd: air -c build/api.air.toml
+        wait_for:
+            - "amqp://dev:dev@127.0.0.1:5672"
+            - "postgres://postgres:dev@localhost:5432/?sslmode=disable"
+    templ_proxy:
+        cmd: cd cmd/web && templ generate --watch --proxy="http://localhost:3000"
+    web:
+        cmd: air -c build/web.air.toml
+        wait_for:
+            - "localhost:50051" # api
+            - "localhost:7331" # templ proxy

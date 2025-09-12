@@ -1,0 +1,37 @@
+package frontend
+
+import "videoapp/internal/proto"
+import "fmt"
+import "github.com/dimmerz92/go-lucide-icons/pkg/templ/icons"
+
+templ ViewVideo(user *proto.User, video *proto.GetVideoResponse) {
+	<link rel="stylesheet" href="https://cdn.vidstack.io/player/theme.css"/>
+	<link rel="stylesheet" href="https://cdn.vidstack.io/player/video.css"/>
+	<script src="https://cdn.vidstack.io/player" type="module"></script>
+	@AppLayout(user) {
+		{ video.Title }
+		{ video.CreatedAt }
+		@VideoStatusPoller(video)
+	}
+}
+
+templ VideoStatusPoller(video *proto.GetVideoResponse) {
+	<div id="poller">
+		if video.Stage == proto.Stage_Processed {
+			<media-player autoplay src={ fmt.Sprintf("http://localhost:9000/videos/%d/master.m3u8", video.UploadId) }>
+				<media-provider></media-provider>
+				<media-video-layout thumbnails={ fmt.Sprintf("http://localhost:9000/videos/%d/thumbnails.vtt", video.UploadId) }></media-video-layout>
+			</media-player>
+		} else {
+			<div class="aspect-video w-full flex items-center justify-center gap-2 bg-base-300 rounded-xl border border-base-10p" hx-get={ fmt.Sprintf("/status/%d", video.Id) } hx-trigger="every 10s" hx-swap="outerHTML" hx-target="#poller">
+				@icons.Cog(icons.IconProps{Class: "animate-spin size-8"})
+				switch video.Stage {
+					case proto.Stage_AwaitingProcessing:
+						Your video is waiting to be processed
+					case proto.Stage_Processing:
+						We are processing your video
+				}
+			</div>
+		}
+	</div>
+}

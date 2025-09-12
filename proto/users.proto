@@ -2,10 +2,10 @@ syntax = "proto3";
 
 package watchtower;
 
-option go_package = "videoapp/proto";
+option go_package = "videoapp/internal/proto";
 
 import "google/protobuf/timestamp.proto";
-import "proto/videos.proto";
+import "videos.proto";
 
 service Users {
   rpc Create(CreateRequest) returns (CreateResponse);

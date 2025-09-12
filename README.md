@@ -8,7 +8,7 @@ go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 curl -sSf https://atlasgo.sh | sh
 bun install -g protoc-gen-ts
 go install github.com/cshum/vipsgen/cmd/vipsgen@latest
-go install github.com/mattn/goreman@latest
+go install github.com/ultravioletasdf/devman@latest
 ```
 
 ### S3
@@ -31,5 +31,5 @@ If you have an nvidia gpu, set `TRANSCODE_NVIDIA=true` to make processing videos
 After that, you can start all needed tools with:
 ```sh
 # Starts minio, rabbitmq, video queues and the server/webclient
-goreman start
+devman
 ```

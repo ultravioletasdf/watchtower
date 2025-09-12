@@ -1,9 +1,8 @@
-proto/*.pb.go
-proto/*.ts
+internal/proto/*
 sql/*.go
-queues/*/videos
-queues/*/results
-queues/*/.models
+cmd/queues/*/videos
+cmd/queues/*/results
+cmd/queues/*/.models
 vips
 tmp
 .vscode
@@ -15,3 +14,5 @@ node_modules
 clients/htmx/assets/tailwind.css
 *_templ.go
 *.fiber.gz
+
+google
