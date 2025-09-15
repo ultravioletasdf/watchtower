@@ -3,9 +3,10 @@ package utils
 import (
 	"context"
 	"log"
-	sqlc "videoapp/sql"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"videoapp/internal/generated/sqlc"
 )
 
 type db struct {

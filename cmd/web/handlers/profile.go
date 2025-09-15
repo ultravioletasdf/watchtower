@@ -11,7 +11,7 @@ import (
 
 	"videoapp/cmd/web/frontend"
 	common "videoapp/internal/errors"
-	"videoapp/internal/proto"
+	"videoapp/internal/generated/proto"
 )
 
 func profile(c *fiber.Ctx) error {

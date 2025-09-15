@@ -10,7 +10,7 @@ import (
 
 	"videoapp/cmd/web/handlers"
 	"videoapp/internal/utils"
-	"videoapp/internal/proto"
+	"videoapp/internal/generated/proto"
 )
 
 func main() {

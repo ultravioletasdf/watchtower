@@ -14,10 +14,10 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
-	"videoapp/internal/proto"
+	"videoapp/internal/generated/proto"
+	"videoapp/internal/generated/sqlc"
+	"videoapp/internal/generated/vips"
 	"videoapp/internal/utils"
-	"videoapp/internal/vips"
-	sqlc "videoapp/sql"
 
 	_ "github.com/mattn/go-sqlite3"
 )

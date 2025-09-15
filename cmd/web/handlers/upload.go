@@ -11,7 +11,7 @@ import (
 
 	"videoapp/cmd/web/frontend"
 	common "videoapp/internal/errors"
-	"videoapp/internal/proto"
+	"videoapp/internal/generated/proto"
 )
 
 func upload(c *fiber.Ctx) error {
@@ -110,9 +110,9 @@ func deleteAvatar(c *fiber.Ctx) error {
 		if errors.Is(status.Err(), common.ErrSessionNotFound) {
 			return c.SendStatus(fiber.StatusUnauthorized)
 		}
-		return c.Status(fiber.StatusInternalServerError).SendString(status.String())
+		return c.Status(fiber.StatusInternalServerError).SendString(status.Message())
 	}
-	return c.SendStatus(200)
+	return Render(c, frontend.SoftSuccess("Removed avatar"))
 }
 
 func publishVideo(c *fiber.Ctx) error {

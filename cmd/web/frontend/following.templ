@@ -1,7 +1,9 @@
 package frontend
 
-import "videoapp/internal/proto"
-import "fmt"
+import (
+	"fmt"
+	"videoapp/internal/generated/proto"
+)
 
 templ Following(user *proto.User, videos []*proto.Video) {
 	@AppLayout(user) {

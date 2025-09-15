@@ -15,10 +15,10 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	common "videoapp/internal/errors"
-	"videoapp/internal/proto"
+	"videoapp/internal/generated/proto"
+	sqlc "videoapp/internal/generated/sqlc"
+	"videoapp/internal/generated/vips"
 	"videoapp/internal/utils"
-	"videoapp/internal/vips"
-	sqlc "videoapp/sql"
 )
 
 type userServer struct {
@@ -127,7 +127,9 @@ func (s *userServer) Get(ctx context.Context, req *proto.UsersGetRequest) (*prot
 			CreatedAt:      timestamppb.New(user.CreatedAt.Time),
 			Flags:          uint64(user.Flags),
 			FollowerCount:  user.FollowerCount,
-			FollowingCount: user.FollowingCount},
+			FollowingCount: user.FollowingCount,
+			DisplayName:    user.DisplayName.String,
+			Description:    user.Description.String},
 		IsFollowing: isFollowing,
 	}, nil
 }
@@ -185,5 +187,22 @@ func (s *userServer) RemoveAvatar(ctx context.Context, req *proto.Session) (*pro
 		return nil, common.ErrInternal(err)
 	}
 	err = s3.RemoveObject(ctx, "avatars", fmt.Sprintf("%d.webp", user.ID), minio.RemoveObjectOptions{})
+	return nil, common.ErrInternal(err)
+}
+
+func (s *userServer) UpdateProfile(ctx context.Context, req *proto.UpdateProfileRequest) (*proto.Empty, error) {
+	if len(req.Session) != SESSION_TOKEN_LENGTH {
+		return nil, common.ErrSessionWrongSize
+	}
+
+	id, err := executor.UpdateProfile(ctx,
+		sqlc.UpdateProfileParams{
+			DisplayName: utils.PgTextFromPointer(req.DisplayName),
+			Description: utils.PgTextFromPointer(req.Description),
+			Token:       req.Session,
+		})
+	if id == 0 {
+		return nil, common.ErrSessionNotFound
+	}
 	return nil, common.ErrInternal(err)
 }

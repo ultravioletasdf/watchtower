@@ -1,17 +1,20 @@
 package frontend
 
-import "github.com/dimmerz92/go-lucide-icons/pkg/templ/icons"
-import "fmt"
+import (
+	"fmt"
+	"github.com/dimmerz92/go-lucide-icons/pkg/templ/icons"
+)
 
 templ ButtonFollow(id int64) {
-    <button class="btn btn-accent btn-soft btn-sm" hx-post={fmt.Sprintf("/follow/%d", id)} hx-swap="outerHTML">
-        @icons.Heart(icons.IconProps{Class: "size-3 fill-current stroke-0"})
-        Follow
-    </button>
+	<button class="btn btn-accent btn-soft btn-sm" hx-post={ fmt.Sprintf("/follow/%d", id) } hx-swap="outerHTML">
+		@icons.Heart(icons.IconProps{Class: "size-3 fill-current stroke-0"})
+		Follow
+	</button>
 }
+
 templ ButtonUnfollow(id int64) {
-    <button class="btn btn-accent btn-sm" hx-delete={fmt.Sprintf("/follow/%d", id)} hx-swap="outerHTML">
-        @icons.HeartCrack(icons.IconProps{Class: "size-4 stroke-2"})
-        Unfollow
-    </button>
+	<button class="btn btn-accent btn-sm" hx-delete={ fmt.Sprintf("/follow/%d", id) } hx-swap="outerHTML">
+		@icons.HeartCrack(icons.IconProps{Class: "size-4 stroke-2"})
+		Unfollow
+	</button>
 }

@@ -1,8 +1,9 @@
 package frontend
 
-import "videoapp/internal/proto"
-
-import "github.com/dimmerz92/go-lucide-icons/pkg/templ/icons"
+import (
+	"github.com/dimmerz92/go-lucide-icons/pkg/templ/icons"
+	"videoapp/internal/generated/proto"
+)
 
 templ Settings(user *proto.User) {
 	@AppLayout(user) {
@@ -17,59 +18,88 @@ templ Settings(user *proto.User) {
 }
 
 templ SettingsProfile(user *proto.User) {
-	<div class="flex w-full">
-		<div class="grow flex flex-col gap-2">
-			<div>
-				<label class="label block" for="">Display Name</label>
-				<label class="input">
-					<input type="text"/>
-					<span class="label">0/30</span>
-				</label>
-			</div>
-			<div>
-				<label class="block label">Avatar</label>
-				<div class="flex flex-col w-fit gap-2">
-					<div class="join" x-data>
-						<label role="button" for="avatarFileInput" class="join-item btn btn-sm btn-primary">Change Avatar</label>
-						<input type="file" id="avatarFileInput" class="hidden" accept="image/*"/>
-						<button class="join-item btn btn-sm" hx-delete="/avatar" @htmx:after-request="$store.avatar.image_found = false" hx-swap="none">Remove Avatar</button>
-					</div>
+	<form hx-put="/settings/profile" @htmx:after-request="console.log($event); if ($event.detail.successful && $event.detail.pathInfo.requestPath == '/settings/profile') { display_name_original = display_name; description_original = description }" hx-target="#toasts" hx-swap="beforeend" class="flex flex-col justify-between h-full" x-data={ templ.JSONString(map[string]any{"display_name": user.DisplayName, "description": user.Description, "display_name_original": user.DisplayName, "description_original": user.Description}) }>
+		<div class="flex flex-col lg:flex-row w-full">
+			<div class="w-full lg:w-1/2 flex flex-col gap-2">
+				// Display Name Input
+				<div>
+					<label class="label block" for="display_name">Display Name</label>
+					<label class="input">
+						<input type="text" name="display_name" x-model="display_name" maxlength="30" minlength="3"/>
+						<span class="label flex gap-0">
+							<span x-text="display_name.length"></span>
+							/30
+						</span>
+					</label>
 				</div>
-			</div>
-			<div>
-				<label class="block label">About Me</label>
-				<textarea class="textarea"></textarea>
-			</div>
-		</div>
-		<div class="grow">
-			<label class="block label">Preview</label>
-			<div class="bg-base-200 rounded-lg p-4">
-				<div class="flex flex-row items-center gap-2">
-					<div class="avatar" x-data="$store.avatar">
-						<div class="w-16 rounded-full bg-base-300 flex! items-center justify-center">
-							<template x-if="image_found">
-								<img
-									id="avatar_preview"
-									:src="image_url"
-									@error="image_found = false"
-								/>
-							</template>
-							<template x-if="!image_found">
-								@icons.UserRound(icons.IconProps{Class: "size-8"})
-							</template>
+				// Avatar Changer
+				<div>
+					<label class="block label">Avatar</label>
+					<div class="flex flex-col w-fit gap-2">
+						<div class="join" x-data>
+							<label role="button" for="avatarFileInput" class="join-item btn btn-sm btn-primary">Change Avatar</label>
+							<input type="file" id="avatarFileInput" class="hidden" accept="image/*"/>
+							<button type="button" class="join-item btn btn-sm" hx-delete="/avatar" @htmx:after-request="if ($event.detail.successful) { $store.avatar.image_found = false }" hx-target="#toasts" hx-swap="beforeend">Remove Avatar</button>
 						</div>
 					</div>
-					<div>
-						<div class="font-bold">Display Name</div>
-						<div class="text-sm">{ "@username" }</div>
+				</div>
+				// Description input
+				<div>
+					<label class="block label" for="description">About Me</label>
+					<div class="textarea">
+						// The x-init and @input attributes resize the textarea to fit the content
+						<textarea maxlength="200" class="w-full resize-none" name="description" x-model="description" x-init='$nextTick(() => { $el.style.height = "";$el.style.height = $el.scrollHeight + "px" })' @input='$el.style.height = "";$el.style.height = $el.scrollHeight + "px"'></textarea>
+						<div class="flex justify-end opacity-60">
+							<span x-text="description.length"></span>
+							/200
+						</div>
 					</div>
 				</div>
-				<div class="text-sm opacity-90 mt-2">
-					Super long and interesting description
+				// Hidden inputs to say what has changed
+				<input name="display_name_changed" class="hidden" x-bind:value="display_name != display_name_original"/>
+				<input name="description_changed" class="hidden" x-bind:value="description != description_original"/>
+			</div>
+			<div class="w-full lg:w-1/2">
+				<label class="block label">Preview</label>
+				<div class="bg-base-200 card card-border border-base-300 p-4">
+					<div class="flex flex-row items-center gap-2">
+						<div class="avatar" x-data="$store.avatar">
+							<div class="w-16 rounded-full bg-base-300 flex! items-center justify-center">
+								<template x-if="image_found">
+									<img
+										id="avatar_preview"
+										:src="image_url"
+										@error="image_found = false"
+									/>
+								</template>
+								<template x-if="!image_found">
+									@icons.UserRound(icons.IconProps{Class: "size-8"})
+								</template>
+							</div>
+						</div>
+						<div class="grow overflow-hidden min-w-0">
+							<div class="font-bold truncate max-w-full" x-show="display_name != ''" x-text="display_name"></div>
+							<div :class="display_name == '' ? 'text-base font-bold' : 'text-sm'">{ "@"+user.Username }</div>
+						</div>
+					</div>
+					<div class="text-sm max-w-full opacity-90 mt-2 text-wrap break-all whitespace-pre-wrap" x-text="description"></div>
 				</div>
 			</div>
 		</div>
-	</div>
+		<div class="w-full pl-4 pr-2 py-2 bg-base-200 flex items-center justify-between rounded-xl shadow-lg" x-show="description != description_original || display_name != display_name_original">
+			<div class="flex items-center gap-2">
+				<span class="relative flex size-3">
+					<span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-75"></span>
+					<span class="relative inline-flex size-3 rounded-full bg-success"></span>
+				</span>
+				Save your changes
+			</div>
+			<button type="submit" class="btn btn-success btn-sm">Save</button>
+		</div>
+	</form>
+	<template id="updatedTemplate">
+		@SoftSuccess("Updated avatar")
+	</template>
 	<script>
 		document.addEventListener('alpine:init', () => {
 			Alpine.store('avatar', {
@@ -84,7 +114,7 @@ templ SettingsProfile(user *proto.User) {
 
 		const avatarPreview = document.getElementById("avatar_preview")
 		document.getElementById('avatarFileInput').addEventListener("change", onUpload)
-
+		const template = document.getElementById('updatedTemplate')
 
 		async function onUpload(e) {
 		    const file = e.target.files[0]
@@ -95,11 +125,57 @@ templ SettingsProfile(user *proto.User) {
 				body: fd
 			})
 			if (res.ok) {
-				console.log("Uploaded!")
+				document.querySelector("#toasts").appendChild(template.content.cloneNode(true))
 				Alpine.store("avatar").refresh()
 			} else {
 				alert("Something went wrong: " + await res.text())
 			}
 		}
 	</script>
+	// @ToastScript()
 }
+
+templ SoftError(message string) {
+	<div
+		class="alert alert-error alert-soft opacity-100 transition duration-250"
+		x-data
+		x-init="setTimeout(() => {
+			$el.classList.add('opacity-0!');
+      		setTimeout(() => $el.remove(), 300);
+        }, 2000)"
+	>
+		@icons.CircleX(icons.IconProps{Class: "size-6"})
+		<span>{ message }</span>
+	</div>
+}
+
+templ SoftSuccess(message string) {
+	<div
+		class="alert alert-success alert-soft opacity-100 transition duration-250"
+		x-data
+		x-init="setTimeout(() => {
+			$el.classList.add('opacity-0!');
+      		setTimeout(() => $el.remove(), 300);
+        }, 2000)"
+	>
+		@icons.CircleCheck(icons.IconProps{Class: "size-6"})
+		<span>{ message }</span>
+	</div>
+}
+
+// var toastHandle = templ.NewOnceHandle()
+
+// templ ToastScript() {
+// 	@toastHandle.Once() {
+// 		<script>
+// 			const params = new URLSearchParams(window.location.search)
+// 			if (params.get("toast") && params.get("toast").trim() != "") {
+//    			    toasts.insertAdjacentHTML("afterbegin",
+//      			    `<div id="toast" class="alert alert-error alert-soft opacity-100 transition duration-250" hx-trigger="load delay:3s" hx-on::trigger="this.classList.add('opacity-0!')">
+//                         <span>${params.get("toast")}</span>
+//                     </div>`)
+// 			}
+
+// 		</script>
+// 	}
+// }

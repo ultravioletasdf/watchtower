@@ -16,9 +16,9 @@ import (
 	protobuf "google.golang.org/protobuf/proto"
 	"gopkg.in/vansante/go-ffprobe.v2"
 
-	"videoapp/internal/proto"
+	"videoapp/internal/generated/proto"
 	"videoapp/internal/queues"
-	sqlc "videoapp/sql"
+	sqlc "videoapp/internal/generated/sqlc"
 )
 
 var STANDARD_HEIGHTS = []int{360, 480, 720, 1080, 1440, 2160}

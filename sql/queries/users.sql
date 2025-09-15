@@ -58,3 +58,12 @@ LEFT JOIN (
     GROUP BY follower_id
 ) following ON following.follower_id = u.id
 WHERE username = $1;
+
+-- name: UpdateProfile :one
+UPDATE users
+SET display_name = COALESCE($1, display_name),
+    description = COALESCE($2, description)
+WHERE id = (
+    SELECT user_id FROM sessions WHERE token = $3
+)
+RETURNING id;

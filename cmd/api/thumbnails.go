@@ -11,9 +11,9 @@ import (
 	"github.com/minio/minio-go/v7"
 
 	common "videoapp/internal/errors"
-	"videoapp/internal/proto"
-	"videoapp/internal/vips"
-	sqlc "videoapp/sql"
+	"videoapp/internal/generated/proto"
+	"videoapp/internal/generated/vips"
+	sqlc "videoapp/internal/generated/sqlc"
 )
 
 type thumbnailsServer struct {

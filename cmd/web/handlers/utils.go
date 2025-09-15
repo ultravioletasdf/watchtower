@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	common "videoapp/internal/errors"
-	"videoapp/internal/proto"
+	"videoapp/internal/generated/proto"
 )
 
 // Responds to the client with the original message from the grpc server, or an unknown error message if isn't from the grpc server

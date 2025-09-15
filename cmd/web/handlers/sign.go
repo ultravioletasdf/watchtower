@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"videoapp/cmd/web/frontend"
-	"videoapp/internal/proto"
+	"videoapp/internal/generated/proto"
 )
 
 func signIn(c *fiber.Ctx) error {

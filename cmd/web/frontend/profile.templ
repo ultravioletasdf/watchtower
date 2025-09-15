@@ -1,9 +1,10 @@
 package frontend
 
-import "videoapp/internal/proto"
-
-import "github.com/dimmerz92/go-lucide-icons/pkg/templ/icons"
-import "fmt"
+import (
+	"fmt"
+	"github.com/dimmerz92/go-lucide-icons/pkg/templ/icons"
+	"videoapp/internal/generated/proto"
+)
 
 templ Profile(viewingUser *proto.User, videos []*proto.GetUserVideosResponseVideo, user *proto.UsersGetResponse) {
 	<script>
@@ -12,7 +13,13 @@ templ Profile(viewingUser *proto.User, videos []*proto.GetUserVideosResponseVide
 		    console.log("Polling " + id)
 			toPoll.push(id)
 		}
-		setInterval(async () => {
+
+		const refreshStagesId = setInterval(async () => {
+		    if (toPoll.length == 0) {
+				console.log("Nothing to poll.")
+				clearInterval(refreshStagesId)
+				return
+			}
 		    console.log("Refreshing stages")
 			const res = await fetch("/stages", {
 			    method: 'POST',
@@ -45,9 +52,17 @@ templ Profile(viewingUser *proto.User, videos []*proto.GetUserVideosResponseVide
 				</div>
 			</div>
 			<div class="flex flex-col">
-				<div class="font-bold text-lg leading-tight">Placeholder Display Name</div>
+				<div class="font-bold text-lg leading-tight">
+					if user.User.DisplayName == "" {
+						{ "@" + user.User.Username }
+					} else {
+						{ user.User.DisplayName }
+					}
+				</div>
 				<div class="flex gap-2 items-center">
-					<span>{ "@" + user.User.Username }</span>
+					if user.User.DisplayName != "" {
+						<span>{ "@" + user.User.Username }</span>
+					}
 					<button class="opacity-70 cursor-pointer hover:opacity-100" onclick="following.showModal()">{ formatCount(user.User.FollowingCount, "Following", false) }</button>
 					<button class="opacity-70 cursor-pointer hover:opacity-100" onclick="followers.showModal()">{ formatCount(user.User.FollowerCount, "Follower", true) }</button>
 					// Hide option to follow yourself
@@ -61,13 +76,16 @@ templ Profile(viewingUser *proto.User, videos []*proto.GetUserVideosResponseVide
 				}
 			}
 		</div>
+		<div class="text-sm opacity-90 whitespace-pre-wrap">
+			{ user.User.Description }
+		</div>
 		<div role="tablist" class="tabs tabs-border">
 			<a role="tab" class="tab tab-active">Videos</a>
 			<a role="tab" class="tab">Playlists</a>
 		</div>
-		<div class="gap-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mt-1">
+		<div class="gap-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mt-1">
 			for _, v := range videos {
-				<a href={ templ.SafeURL(fmt.Sprintf("/videos/%d", v.Id)) }>
+				<a class="rounded-lg bg-base-200 transition shadow-none scale-100 hover:scale-105 pb-4 hover:shadow-[0px_45px_23px_-26px_rgba(0,_0,_0,_0.4)]" href={ templ.SafeURL(fmt.Sprintf("/videos/%d", v.Id)) }>
 					{{
 						notProcessed := v.Stage != proto.Stage_Processed
 						opacity := 0.0
@@ -76,7 +94,7 @@ templ Profile(viewingUser *proto.User, videos []*proto.GetUserVideosResponseVide
 						}
 					}}
 					<div
-						class={ "bg-base bg-cover bg-center aspect-video rounded flex items-center justify-center", BackgroundThumbnail(v.ThumbnailId) }
+						class={ "bg-base bg-cover bg-center aspect-video rounded flex items-center justify-center ", BackgroundThumbnail(v.ThumbnailId) }
 						style={ fmt.Sprintf("--opacity: %f", opacity) }
 						if notProcessed {
 							x-init={ fmt.Sprintf("poll('%d')", v.Id) }
@@ -88,9 +106,11 @@ templ Profile(viewingUser *proto.User, videos []*proto.GetUserVideosResponseVide
 							@icons.Cog(icons.IconProps{Class: "size-6 animate-spin", Attributes: templ.Attributes{"x-show": fmt.Sprintf("$store.stages['%d'] !== %d", v.Id, proto.Stage_Processed)}})
 						}
 					</div>
-					{ v.Title }
-					<div class="text-sm text-base-content/70">
-						{ formatDate(v.CreatedAt) }
+					<div class="px-4 pt-4">
+						{ v.Title }
+						<div class="text-sm text-base-content/70">
+							{ formatDate(v.CreatedAt) }
+						</div>
 					</div>
 				</a>
 			}

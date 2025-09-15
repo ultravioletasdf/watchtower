@@ -1,8 +1,10 @@
 package frontend
 
-import "videoapp/internal/proto"
-import "fmt"
-import "github.com/dimmerz92/go-lucide-icons/pkg/templ/icons"
+import (
+	"fmt"
+	"github.com/dimmerz92/go-lucide-icons/pkg/templ/icons"
+	"videoapp/internal/generated/proto"
+)
 
 templ ViewVideo(user *proto.User, video *proto.GetVideoResponse) {
 	<link rel="stylesheet" href="https://cdn.vidstack.io/player/theme.css"/>

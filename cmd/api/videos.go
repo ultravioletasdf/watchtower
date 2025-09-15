@@ -13,9 +13,9 @@ import (
 	protobuf "google.golang.org/protobuf/proto"
 
 	common "videoapp/internal/errors"
-	"videoapp/internal/proto"
+	"videoapp/internal/generated/proto"
 	"videoapp/internal/utils"
-	sqlc "videoapp/sql"
+	sqlc "videoapp/internal/generated/sqlc"
 )
 
 type videoService struct {

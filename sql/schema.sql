@@ -2,7 +2,9 @@ CREATE TABLE
 users (
     id bigint PRIMARY KEY,
     email text NOT NULL,
-    username varchar(72) NOT NULL,
+    username varchar(32) NOT NULL,
+    display_name varchar(32),
+    description varchar(200),
     password bytea NOT NULL,
     created_at timestamptz NOT NULL,
     flags int NOT NULL DEFAULT 0,

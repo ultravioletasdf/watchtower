@@ -14,7 +14,7 @@ import (
 	protobuf "google.golang.org/protobuf/proto"
 	"gopkg.in/gographics/imagick.v3/imagick"
 
-	"videoapp/internal/proto"
+	"videoapp/internal/generated/proto"
 	"videoapp/internal/queues"
 )
 

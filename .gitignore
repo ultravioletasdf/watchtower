@@ -1,4 +1,4 @@
-internal/proto/*
+internal/generated
 sql/*.go
 cmd/queues/*/videos
 cmd/queues/*/results

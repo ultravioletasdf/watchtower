@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"videoapp/cmd/web/frontend"
-	"videoapp/internal/proto"
+	"videoapp/internal/generated/proto"
 )
 
 func follow(c *fiber.Ctx) error {

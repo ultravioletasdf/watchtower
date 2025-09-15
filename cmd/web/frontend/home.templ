@@ -3,7 +3,7 @@ package frontend
 import (
 	"fmt"
 
-	"videoapp/internal/proto"
+	"videoapp/internal/generated/proto"
 
 	"github.com/dimmerz92/go-lucide-icons/pkg/templ/icons"
 )
@@ -71,7 +71,7 @@ templ Nav(user *proto.User) {
 					}
 				</div>
 			</div>
-			<ul class="dropdown-content menu bg-base-300 rounded-box z-1 w-52 p-2 shadow-sm ">
+			<ul class="dropdown-content menu bg-base-300 rounded-box z-1 w-52 p-2">
 				if user == nil {
 					<li tabindex="0">
 						<a href="/sign/in">

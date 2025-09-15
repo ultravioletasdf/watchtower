@@ -11,7 +11,7 @@ import (
 	"github.com/rabbitmq/amqp091-go"
 	ffmpeg "github.com/u2takey/ffmpeg-go"
 
-	"videoapp/internal/proto"
+	"videoapp/internal/generated/proto"
 )
 
 var ctx = context.Background()

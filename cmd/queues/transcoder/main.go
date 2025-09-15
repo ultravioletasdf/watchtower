@@ -11,7 +11,7 @@ import (
 
 	"videoapp/internal/queues"
 	"videoapp/internal/utils"
-	sqlc "videoapp/sql"
+	sqlc "videoapp/internal/generated/sqlc"
 )
 
 var cfg utils.Config

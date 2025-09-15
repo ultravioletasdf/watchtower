@@ -1,8 +1,10 @@
 package frontend
 
-import "github.com/dimmerz92/go-lucide-icons/pkg/templ/icons"
-import "fmt"
-import "videoapp/internal/proto"
+import (
+	"fmt"
+	"github.com/dimmerz92/go-lucide-icons/pkg/templ/icons"
+	"videoapp/internal/generated/proto"
+)
 
 templ Upload(user *proto.User) {
 	@AppLayout(user) {

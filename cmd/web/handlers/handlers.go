@@ -12,8 +12,8 @@ import (
 
 	"videoapp/cmd/web/frontend"
 	common "videoapp/internal/errors"
+	"videoapp/internal/generated/proto"
 	"videoapp/internal/utils"
-	"videoapp/internal/proto"
 )
 
 type Dependencies struct {
@@ -40,6 +40,7 @@ func Add(app *fiber.App, dependencies Dependencies) {
 	app.Get("/sign/out", signOut)
 
 	app.Get("/settings", settings)
+	app.Put("/settings/profile", putProfile)
 	app.Post("/avatar", uploadAvatar)
 	app.Delete("/avatar", deleteAvatar)
 
@@ -61,7 +62,9 @@ func Add(app *fiber.App, dependencies Dependencies) {
 	app.Post("/upload/:id/publish", publishVideo)
 	app.Post("/upload/thumbnail", uploadThumbnail)
 	app.Post("/upload/thumbnail/:id/process", processThumbnail)
-
+	app.Post("/toasts", func(c *fiber.Ctx) error {
+		return Render(c, frontend.SoftError("This is a toast"))
+	})
 	app.Use(etag.New())
 	app.Static("/assets", "./cmd/web/assets", fiber.Static{Compress: true})
 }

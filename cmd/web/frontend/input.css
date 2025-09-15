@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @plugin "daisyui";
 
-
 @plugin "daisyui/theme" {
     name: "dark";
     default: true;
@@ -48,9 +47,11 @@
 }
 
 @theme {
-    --color-base-10p: color-mix(in oklab,
-            var(--color-base-content) 10%,
-            transparent);
+    --color-base-10p: color-mix(
+        in oklab,
+        var(--color-base-content) 10%,
+        transparent
+    );
 }
 
 .dropzone {
@@ -79,4 +80,8 @@
 
 [x-cloak] {
     display: none !important;
+}
+
+.animate-bounce-once {
+    animation: bounce 1s;
 }

@@ -6,12 +6,10 @@ bin = "tmp/api"
 exclude_dir = [
     "tmp",
     "testdata",
-    "migrations",
-    "clients",
-    "node_modules",
-    "video_analyser",
+    "internal/generated",
+    "node_modules"
 ]
 exclude_file = []
-exclude_regex = ["_test.go", "_templ.go", "sql\\/.*\\.go", ".pb.go"]
+exclude_regex = ["_test.go", "_templ.go"]
 include_ext = ["go", "sql", "proto"]
 include_dir = ["cmd/api", "sql", "proto", "internal"]

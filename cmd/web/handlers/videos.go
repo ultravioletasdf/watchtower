@@ -6,7 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"videoapp/cmd/web/frontend"
-	"videoapp/internal/proto"
+	"videoapp/internal/generated/proto"
 )
 
 func viewVideo(c *fiber.Ctx) error {

@@ -1,7 +1,9 @@
 package frontend
 
-import "time"
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 templ Base() {
 	<!DOCTYPE html>
@@ -15,6 +17,18 @@ templ Base() {
 		</head>
 		<body class="h-full bg-base-100">
 			{ children... }
+			<div class="toast toast-center" id="toasts"></div>
+			<template id="globalError">
+				@SoftError("")
+			</template>
+			<script>
+			document.body.addEventListener("htmx:responseError", function(e) {
+                let error = e.detail.xhr.response;
+                let toast = document.querySelector('#globalError').content.cloneNode(true)
+                toast.querySelector("span").textContent = error
+                document.querySelector('#toasts').appendChild(toast)
+            });
+			</script>
 		</body>
 	</html>
 }

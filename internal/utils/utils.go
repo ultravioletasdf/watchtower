@@ -7,6 +7,8 @@ import (
 	"net/mail"
 	"regexp"
 	"strings"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const VERIFY_CODE_MAX int64 = 999_999
@@ -49,4 +51,11 @@ func GenerateString(length int) (string, error) {
 func GenerateVerifyCode() (int32, error) {
 	n, err := rand.Int(rand.Reader, big.NewInt(VERIFY_CODE_MAX))
 	return int32(n.Int64()), err
+}
+
+func PgTextFromPointer(s *string) pgtype.Text {
+	if s == nil {
+		return pgtype.Text{Valid: false}
+	}
+	return pgtype.Text{String: *s, Valid: true}
 }
