@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"image/jpeg"
 	"io/fs"
@@ -14,6 +15,7 @@ import (
 	protobuf "google.golang.org/protobuf/proto"
 
 	"videoapp/internal/generated/proto"
+	"videoapp/internal/generated/sqlc"
 	"videoapp/internal/queues"
 )
 
@@ -34,7 +36,7 @@ func handleMessage(d amqp091.Delivery) {
 		return
 	}
 
-	if err := queues.Split(d, uploadId, "fps=1"); err != nil {
+	if err := queues.Split(d, uploadId, "fps=1,scale=-1:300"); err != nil {
 		return
 	}
 	if err := dedupe(uploadId); err != nil {
@@ -44,7 +46,12 @@ func handleMessage(d amqp091.Delivery) {
 		}
 		return
 	}
-	findNsfw(uploadId)
+	nsfw := findNsfw(uploadId)
+	if nsfw {
+		if err := queries.UpdateVideoStage(context.Background(), sqlc.UpdateVideoStageParams{ID: message.VideoId, Stage: int32(proto.Stage_FlaggedForNudity)}); err != nil {
+			log.Printf("Failed to flag %d: %v\n", message.VideoId, err)
+		}
+	}
 
 	if err := d.Ack(false); err != nil {
 		log.Printf("failed to ack: %v\n", err)
@@ -81,7 +88,6 @@ func dedupe(uploadId string) error {
 				continue
 			}
 			if dist <= thresh {
-				log.Printf("Found similar image %s and %s, distance %d\n", path, existing, dist)
 				if err := os.Remove(existing); err != nil {
 					log.Printf("Failed to remove similar files, %v\n", err)
 				}
@@ -95,19 +101,33 @@ func dedupe(uploadId string) error {
 	log.Printf("Cleaned up %d similar images\n", count)
 	return err
 }
-func findNsfw(uploadId string) {
+func findNsfw(uploadId string) bool {
 	files, err := os.ReadDir("results/" + uploadId)
 	if err != nil {
 		panic(err)
 	}
+	var suspicousCount int
+
 	for _, file := range files {
+		if suspicousCount >= 3 {
+			log.Println("Reached suspicous image threshold")
+			return true
+		}
 		if file.IsDir() {
 			continue
 		}
 		img := predictor.NewImage(fmt.Sprintf("results/%s/%s", uploadId, file.Name()), 3)
 		res := predictor.Predict(img)
-		if res.Hentai > 0.7 || res.Porn > 0.7 || res.Sexy > 0.9 {
+
+		if res.Hentai > 0.99 || res.Porn > 0.95 || res.Sexy > 0.95 {
+			log.Println("Super suspicous image")
+			return true
+		}
+		if res.Hentai > 0.95 || res.Porn > 0.9 || res.Sexy > 0.9 {
 			log.Printf("Suspicious image %s, H: %.2f%%; P: %.2f%%; S %.2f%%;", file.Name(), res.Hentai*100, res.Porn*100, res.Sexy*100)
+			suspicousCount++
 		}
 	}
+	fmt.Printf("%d suspicous images for %s\n", suspicousCount, uploadId)
+	return false
 }

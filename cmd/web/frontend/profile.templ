@@ -87,11 +87,14 @@ templ Profile(viewingUser *proto.User, videos []*proto.GetUserVideosResponseVide
 			for _, v := range videos {
 				<a class="rounded-lg bg-base-200 transition shadow-none scale-100 hover:scale-105 pb-4 hover:shadow-[0px_45px_23px_-26px_rgba(0,_0,_0,_0.4)]" href={ templ.SafeURL(fmt.Sprintf("/videos/%d", v.Id)) }>
 					{{
-						notProcessed := v.Stage != proto.Stage_Processed
+						flagged := v.Stage == proto.Stage_FlaggedForNudity
+						notProcessed := !flagged && v.Stage != proto.Stage_Processed
 						opacity := 0.0
-						if notProcessed {
+						if notProcessed || flagged {
 							opacity = 0.6
 						}
+
+						isFlaggedReactive := fmt.Sprintf("($store.stages['%d'] === %d)", v.Id, proto.Stage_FlaggedForNudity)
 					}}
 					<div
 						class={ "bg-base bg-cover bg-center aspect-video rounded flex items-center justify-center ", BackgroundThumbnail(v.ThumbnailId) }
@@ -103,7 +106,12 @@ templ Profile(viewingUser *proto.User, videos []*proto.GetUserVideosResponseVide
 						}
 					>
 						if notProcessed {
-							@icons.Cog(icons.IconProps{Class: "size-6 animate-spin", Attributes: templ.Attributes{"x-show": fmt.Sprintf("$store.stages['%d'] !== %d", v.Id, proto.Stage_Processed)}})
+							// shows when flagged for nudity
+							@icons.TriangleAlert(icons.IconProps{Class: "size-6", Attributes: templ.Attributes{"x-show": isFlaggedReactive}})
+							// shows when not processed and not flagged for nudity
+							@icons.Cog(icons.IconProps{Class: "size-6 animate-spin", Attributes: templ.Attributes{"x-show": fmt.Sprintf("!%s && $store.stages['%d'] !== %d", isFlaggedReactive, v.Id, proto.Stage_Processed)}})
+						} else if flagged {
+							@icons.TriangleAlert(icons.IconProps{Class: "size-6"})
 						}
 					</div>
 					<div class="px-4 pt-4">

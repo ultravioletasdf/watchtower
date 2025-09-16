@@ -57,6 +57,7 @@ func handleMessage(d amqp091.Delivery) {
 		log.Printf("failed to ack: %v\n", err)
 	}
 	log.Printf("Completed thumbnail generation for video %d, upload %d\n", message.VideoId, message.UploadId)
+	queues.Cleanup(message.UploadId)
 }
 func genStoryBoard(d amqp091.Delivery, uploadId string) (int, error) {
 	files, err := os.ReadDir("results/" + uploadId)

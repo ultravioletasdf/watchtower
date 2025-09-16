@@ -11,10 +11,3 @@ FROM
     uploads
 WHERE
     id = $1;
-
--- name: UpdateVideoStage :exec
-UPDATE videos
-SET
-    stage = $1
-WHERE
-    id = $2;

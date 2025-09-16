@@ -9,9 +9,9 @@ import (
 	"github.com/minio/minio-go/v7"
 	amqp "github.com/rabbitmq/amqp091-go"
 
+	sqlc "videoapp/internal/generated/sqlc"
 	"videoapp/internal/queues"
 	"videoapp/internal/utils"
-	sqlc "videoapp/internal/generated/sqlc"
 )
 
 var cfg utils.Config
@@ -64,7 +64,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to register consumer: %v", err)
 	}
-	var forever chan struct{}
 
 	go func() {
 		for d := range msgs {
@@ -72,7 +71,7 @@ func main() {
 		}
 	}()
 
-	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
+	log.Printf("Waiting for messages")
 
-	<-forever
+	select {} // Block forever
 }

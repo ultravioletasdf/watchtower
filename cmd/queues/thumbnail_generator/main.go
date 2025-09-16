@@ -62,15 +62,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to register consumer: %v", err)
 	}
-	var forever chan struct{}
-
 	go func() {
 		for d := range msgs {
 			handleMessage(d)
 		}
 	}()
 
-	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
+	log.Println("Waiting for messages")
 
-	<-forever
+	select {} // Block forever
 }

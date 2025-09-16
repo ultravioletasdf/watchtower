@@ -12,14 +12,19 @@ templ ViewVideo(user *proto.User, video *proto.GetVideoResponse) {
 	<script src="https://cdn.vidstack.io/player" type="module"></script>
 	@AppLayout(user) {
 		{ video.Title }
-		{ video.CreatedAt }
+		{ formatDate(video.CreatedAt) }
 		@VideoStatusPoller(video)
 	}
 }
 
 templ VideoStatusPoller(video *proto.GetVideoResponse) {
 	<div id="poller">
-		if video.Stage == proto.Stage_Processed {
+		if video.Stage == proto.Stage_FlaggedForNudity {
+			<div class="aspect-video w-full flex items-center justify-center gap-2 bg-base-300 rounded-xl border border-base-10p">
+				@icons.TriangleAlert(icons.IconProps{Class: "size-8"})
+				This video was flagged for nudity
+			</div>
+		} else if video.Stage == proto.Stage_Processed {
 			<media-player autoplay src={ fmt.Sprintf("http://localhost:9000/videos/%d/master.m3u8", video.UploadId) }>
 				<media-provider></media-provider>
 				<media-video-layout thumbnails={ fmt.Sprintf("http://localhost:9000/videos/%d/thumbnails.vtt", video.UploadId) }></media-video-layout>

@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
+	"time"
 
 	"github.com/ccuetoh/nsfw"
 	"github.com/joho/godotenv"
@@ -10,6 +12,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/sirupsen/logrus"
 
+	"videoapp/internal/generated/sqlc"
 	"videoapp/internal/queues"
 	"videoapp/internal/utils"
 )
@@ -17,6 +20,7 @@ import (
 var cfg utils.Config
 var s3 *minio.Client
 var predictor *nsfw.Predictor
+var queries *sqlc.Queries
 
 func main() {
 	queues.CleanupAll()
@@ -40,6 +44,11 @@ func main() {
 	cfg = utils.ParseConfig()
 
 	s3 = utils.ConnectS3(cfg)
+	database := utils.ConnectDatabase(cfg)
+	queries = database.Queries
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer database.Close(ctx)
+	defer cancel()
 
 	conn, err := amqp.Dial(cfg.AmqpUrl)
 	if err != nil {
@@ -69,7 +78,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to register consumer: %v", err)
 	}
-	var forever chan struct{}
 
 	go func() {
 		for d := range msgs {
@@ -77,7 +85,7 @@ func main() {
 		}
 	}()
 
-	log.Printf(" [*] Waiting for messages. To exit press CTRL+C")
+	log.Println("Waiting for messages")
 
-	<-forever
+	select {} // Block forever
 }

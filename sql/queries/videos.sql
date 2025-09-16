@@ -45,7 +45,7 @@ FROM videos
 WHERE id = ANY(sqlc.arg(ids)::bigint[]);
 
 -- name: GetUsersFollowingVideos :many
-SELECT v.* 
+SELECT v.*
 FROM videos as v
 JOIN follows as f
 ON v.user_id = f.user_id
@@ -55,3 +55,11 @@ AND v.stage = 3
 ORDER BY v.id DESC
 LIMIT 10
 OFFSET $2;
+
+-- name: UpdateVideoStage :exec
+UPDATE videos
+SET
+    stage = $1
+WHERE
+    id = $2
+    AND STAGE <> 4;
