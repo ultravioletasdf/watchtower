@@ -114,6 +114,9 @@ func getResource(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(403)
 		return
 	}
+	if time.Now().After(payload.ExpireAt) {
+		w.WriteHeader(403)
+	}
 	getObject(w, r, bucket, object)
 }
 
