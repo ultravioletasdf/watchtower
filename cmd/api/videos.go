@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -14,8 +15,8 @@ import (
 
 	common "videoapp/internal/errors"
 	"videoapp/internal/generated/proto"
-	"videoapp/internal/utils"
 	sqlc "videoapp/internal/generated/sqlc"
+	"videoapp/internal/utils"
 )
 
 type videoService struct {
@@ -101,7 +102,17 @@ func (s *videoService) Create(ctx context.Context, req *proto.VideosCreateReques
 	return &proto.VideosCreateResponse{Id: id.Int64()}, nil
 }
 func (s *videoService) GetUserVideos(ctx context.Context, req *proto.GetUserVideosRequest) (*proto.GetUserVideosResponse, error) {
-	res, err := executor.GetUserVideos(ctx, req.Id)
+	var showPrivate bool
+	if req.Session != "" {
+		_, err := executor.GetUserFromSession(ctx, req.Session)
+		if err == nil {
+			showPrivate = true
+		} else if !errors.Is(err, sql.ErrNoRows) {
+			fmt.Println(err)
+		}
+	}
+
+	res, err := executor.GetUserVideos(ctx, sqlc.GetUserVideosParams{UserID: req.Id, ShowPrivate: showPrivate})
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, common.ErrNoVideosFound
 	}
@@ -114,6 +125,7 @@ func (s *videoService) GetUserVideos(ctx context.Context, req *proto.GetUserVide
 	}
 	return &proto.GetUserVideosResponse{Videos: videos}, nil
 }
+
 func (s *videoService) Get(ctx context.Context, req *proto.GetVideoRequest) (*proto.GetVideoResponse, error) {
 	v, err := executor.GetVideo(ctx, req.Id)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -122,7 +134,26 @@ func (s *videoService) Get(ctx context.Context, req *proto.GetVideoRequest) (*pr
 	if err != nil {
 		return nil, common.ErrInternal(err)
 	}
-	return &proto.GetVideoResponse{Id: v.ID, Title: v.Title, Visibility: proto.Visibility(v.Visibility), CreatedAt: v.CreatedAt.Time.Unix(), ThumbnailId: v.ThumbnailID, UploadId: v.UploadID, UserId: v.UserID, Stage: proto.Stage(v.Stage)}, nil
+
+	if v.Visibility == int32(proto.Visibility_Private) {
+		if len(req.Session) != SESSION_TOKEN_LENGTH {
+			return nil, common.ErrSessionWrongSize
+		}
+		user, err := executor.GetUserFromSession(ctx, req.Session)
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, common.ErrSessionNotFound
+		}
+		if v.UserID != user.ID {
+			return nil, common.ErrUnauthorized
+		}
+	}
+
+	payload, sig, err := utils.GeneratePresignedUrl(privateKey, v.UploadID, req.Session)
+	if err != nil {
+		return nil, err
+	}
+
+	return &proto.GetVideoResponse{Id: v.ID, Title: v.Title, Visibility: proto.Visibility(v.Visibility), CreatedAt: v.CreatedAt.Time.Unix(), ThumbnailId: v.ThumbnailID, UploadId: v.UploadID, UserId: v.UserID, Stage: proto.Stage(v.Stage), AuthorizationPayload: payload, AuthorizationSignature: sig}, nil
 }
 func (s *videoService) Delete(ctx context.Context, req *proto.DeleteVideoRequest) (*proto.DeleteVideoResponse, error) {
 	if len(req.Session) != SESSION_TOKEN_LENGTH {
@@ -161,7 +192,15 @@ func (s *videoService) GetStage(ctx context.Context, req *proto.VideosGetStageRe
 	if err != nil {
 		return nil, common.ErrInternal(err)
 	}
-	return &proto.VideosGetStageResponse{Stage: proto.Stage(stage.Stage), UploadId: stage.UploadID}, nil
+	var pl, sg string
+	if stage.Stage == int32(proto.Stage_Processed) {
+		payload, sig, err := utils.GeneratePresignedUrl(privateKey, stage.UploadID, req.Session)
+		if err != nil {
+			return nil, err
+		}
+		pl, sg = payload, sig
+	}
+	return &proto.VideosGetStageResponse{Stage: proto.Stage(stage.Stage), UploadId: stage.UploadID, AuthorizationPayload: pl, AuthorizationSignature: sg}, nil
 }
 func (s *videoService) GetStages(ctx context.Context, req *proto.VideosGetStagesRequest) (*proto.VideosGetStagesResponse, error) {
 	json, err := executor.GetStages(ctx, req.Ids)

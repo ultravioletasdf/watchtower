@@ -4,6 +4,8 @@ import (
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"videoapp/cmd/web/frontend"
 	"videoapp/internal/generated/proto"
@@ -14,10 +16,13 @@ func viewVideo(c *fiber.Ctx) error {
 	if err != nil {
 		return c.SendString("Invalid video id")
 	}
-	v, err := deps.Clients.Videos.Get(ctx, &proto.GetVideoRequest{Session: c.Params("session"), Id: idInt})
-	// add better error handling
-	if shouldReturn := unwrapGrpcError(c, err, 500); shouldReturn {
-		return nil
+	v, err := deps.Clients.Videos.Get(ctx, &proto.GetVideoRequest{Session: c.Cookies("session"), Id: idInt})
+	if err != nil {
+		status := status.Convert(err)
+		if status.Code() == codes.PermissionDenied || status.Code() == codes.Unauthenticated {
+			return Render(c, frontend.VideoError(getUser(c), "This video is private"))
+		}
+		return Render(c, frontend.VideoError(getUser(c), "Unknown Error: "+status.Message()))
 	}
 	return Render(c, frontend.ViewVideo(getUser(c), v))
 }
@@ -30,5 +35,5 @@ func videoStatus(c *fiber.Ctx) error {
 	if shouldReturn := unwrapGrpcError(c, err, 200); shouldReturn {
 		return nil
 	}
-	return Render(c, frontend.VideoStatusPoller(&proto.GetVideoResponse{Id: id, UploadId: stage.UploadId, Stage: stage.Stage}))
+	return Render(c, frontend.VideoStatusPoller(&proto.GetVideoResponse{Id: id, UploadId: stage.UploadId, Stage: stage.Stage, AuthorizationPayload: stage.AuthorizationPayload, AuthorizationSignature: stage.AuthorizationSignature}))
 }

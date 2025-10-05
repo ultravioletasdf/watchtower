@@ -5,6 +5,7 @@ services:
         cmd: docker compose -f ./build/dev.docker-compose.yaml up
         wait_for:
             - "localhost:9000"
+
     video_analyser:
         cmd: cd cmd/queues/video_analyser && air
         wait_for:
@@ -29,3 +30,8 @@ services:
         wait_for:
             - "localhost:50051" # api
             - "localhost:7331" # templ proxy
+    cdn:
+        cmd: cd cmd/cdn && air
+        wait_for:
+            - "localhost:9000"
+            - "localhost:50051"

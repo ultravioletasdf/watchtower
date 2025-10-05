@@ -1,12 +1,19 @@
 package utils
 
 import (
+	"crypto/ecdsa"
 	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
+	"fmt"
 	"math/big"
 	"net/mail"
 	"regexp"
 	"strings"
+	"time"
+	common "videoapp/internal/errors"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -58,4 +65,27 @@ func PgTextFromPointer(s *string) pgtype.Text {
 		return pgtype.Text{Valid: false}
 	}
 	return pgtype.Text{String: *s, Valid: true}
+}
+
+type PresignedToken struct {
+	Prefix   string
+	ExpireAt time.Time
+}
+
+// Takes an upload id and generates a URL for accessing that video with a prefix, expiry and trustable signature
+func GeneratePresignedUrl(privateKey *ecdsa.PrivateKey, uploadId int64, session string) (string, string, error) {
+	token := PresignedToken{Prefix: fmt.Sprintf("/videos/%d", uploadId), ExpireAt: time.Now().Add(time.Hour * 6)}
+	data, err := json.Marshal(token)
+	if err != nil {
+		return "", "", common.ErrInternal(err)
+	}
+	hash := sha256.Sum256([]byte(data))
+
+	sigBytes, err := ecdsa.SignASN1(rand.Reader, privateKey, hash[:])
+	if err != nil {
+		return "", "", common.ErrInternal(err)
+	}
+	payload := base64.RawURLEncoding.EncodeToString(data)
+	sig := base64.RawURLEncoding.EncodeToString(sigBytes)
+	return payload, sig, nil
 }

@@ -28,7 +28,7 @@ func profile(c *fiber.Ctx) error {
 		}
 		return c.Status(fiber.StatusInternalServerError).SendString("Internal Error:" + err.Err().Error())
 	}
-	res, err := deps.Clients.Videos.GetUserVideos(c.Context(), &proto.GetUserVideosRequest{Id: user.User.Id})
+	res, err := deps.Clients.Videos.GetUserVideos(c.Context(), &proto.GetUserVideosRequest{Id: user.User.Id, Session: session})
 	if err == nil {
 		return Render(c, frontend.Profile(getUser(c), res.Videos, user))
 	}

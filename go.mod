@@ -14,7 +14,9 @@ require (
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/joho/godotenv v1.5.1
 	github.com/minio/minio-go/v7 v7.0.94
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/rabbitmq/amqp091-go v1.10.0
+	github.com/rs/cors v1.11.1
 	github.com/sirupsen/logrus v1.9.0
 	github.com/u2takey/ffmpeg-go v0.5.0
 	golang.org/x/crypto v0.39.0

@@ -9,10 +9,11 @@ tmp
 node_modules
 
 .env
-*.db
+*.pem
 
-clients/htmx/assets/tailwind.css
+tailwind.css
 *_templ.go
 *.fiber.gz
 
 google
+cache

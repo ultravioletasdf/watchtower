@@ -20,7 +20,7 @@ var (
 	ErrPasswordWrongSize = status.Error(codes.InvalidArgument, "Password must be between 8 and 72 characters")
 	ErrIncorrectPassword = status.Error(codes.InvalidArgument, "Incorrect password")
 
-	ErrSessionWrongSize = status.Error(codes.InvalidArgument, "Session token is the wrong length")
+	ErrSessionWrongSize = status.Error(codes.Unauthenticated, "Session token is the wrong length")
 	ErrSessionNotFound  = status.Error(codes.NotFound, "No user has that session")
 
 	ErrIncorrectVerifyCode = status.Error(codes.InvalidArgument, "Verify code is incorrect")
@@ -35,6 +35,8 @@ var (
 
 	ErrUnauthorized = status.Error(codes.PermissionDenied, "You do not have authorization to do that")
 	ErrInvalidImage = status.Error(codes.InvalidArgument, "We couldn't process the image you provided")
+
+	ErrBucketNotHandled = status.Error(codes.InvalidArgument, "We haven't set up a handler for that bucket or it doesn't exist")
 )
 
 func ErrInternal(err error) error {

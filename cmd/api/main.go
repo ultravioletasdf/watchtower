@@ -2,10 +2,17 @@ package main
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/x509"
+	"encoding/pem"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
 	"net"
+	"os"
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/joho/godotenv"
@@ -26,6 +33,7 @@ var cfg utils.Config
 var snowflakeNode *snowflake.Node
 var executor *sqlc.Queries
 var s3 *minio.Client
+var privateKey *ecdsa.PrivateKey
 var rabbit Rabbit
 
 type Rabbit struct {
@@ -59,6 +67,7 @@ func main() {
 		log.Fatalf("Failed to create snowflake node: %v", err)
 	}
 
+	generateOrReadKeys()
 	s3 = utils.ConnectS3(cfg)
 	db := utils.ConnectDatabase(cfg)
 	defer db.Close(context.Background())
@@ -117,4 +126,46 @@ func connectRabbit() {
 	rabbit.queues.AnalyseVideos = &analyseVideoQueue
 	rabbit.queues.TranscodeVideos = &transcodeQueue
 	rabbit.queues.GenerateThumbnails = &thumbnailQueue
+}
+
+func generateOrReadKeys() {
+	bytes, err := os.ReadFile("./private_key.pem")
+	if errors.Is(err, os.ErrNotExist) {
+		priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+		if err != nil {
+			panic(err)
+		}
+
+		privBytes, err := x509.MarshalECPrivateKey(priv)
+		if err != nil {
+			panic(err)
+		}
+		privPem := pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: privBytes})
+		if err := os.WriteFile("./private_key.pem", privPem, 0600); err != nil {
+			panic(err)
+		}
+		privateKey = priv
+		fmt.Println("Created key")
+	} else if err == nil {
+		block, _ := pem.Decode(bytes)
+		if block == nil || block.Type != "EC PRIVATE KEY" {
+			panic("Failed to decode private key")
+		}
+		priv, err := x509.ParseECPrivateKey(block.Bytes)
+		if err != nil {
+			panic(err)
+		}
+		privateKey = priv
+	} else {
+		panic("There was an error reading the private key: " + err.Error())
+	}
+
+	pubBytes, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+	if err != nil {
+		panic(err)
+	}
+	pubPem := pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: pubBytes})
+	if err := os.WriteFile("./public_key.pem", pubPem, 0644); err != nil {
+		panic(err)
+	}
 }

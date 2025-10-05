@@ -9,8 +9,7 @@ service Videos {
   rpc Create(VideosCreateRequest) returns (VideosCreateResponse);
   rpc GetUserVideos(GetUserVideosRequest) returns (GetUserVideosResponse);
   rpc Get(GetVideoRequest) returns (GetVideoResponse);
-  rpc GetUserFollowingVideos(GetUserFollowingVideosRequest)
-      returns (GetUserFollowingVideosRequest);
+  rpc GetUserFollowingVideos(GetUserFollowingVideosRequest) returns (GetUserFollowingVideosRequest);
   rpc GetStage(VideosGetStageRequest) returns (VideosGetStageResponse);
   rpc GetStages(VideosGetStagesRequest) returns (VideosGetStagesResponse);
   rpc Delete(DeleteVideoRequest) returns (DeleteVideoResponse);
@@ -22,34 +21,48 @@ message VideosGetStageRequest {
 message VideosGetStageResponse {
   Stage stage = 1;
   int64 upload_id = 2;
+  string authorization_payload = 3;
+  string authorization_signature = 4;
 }
-message VideosGetStagesRequest { repeated int64 ids = 1; }
-message VideosGetStagesResponse { string result = 1; }
-message CreateUploadRequest { string session = 1; }
+message VideosGetStagesRequest {
+  repeated int64 ids = 1;
+}
+message VideosGetStagesResponse {
+  string result = 1;
+}
+message CreateUploadRequest {
+  string session = 1;
+}
 message CreateUploadResponse {
-  int64 id = 1 [ jstype = JS_STRING ];
+  int64 id = 1 [jstype = JS_STRING];
   string url = 2;
   map<string, string> form_data = 3;
 }
 message VideosCreateRequest {
   string session = 1;
-  int64 upload_id = 2 [ jstype = JS_STRING ];
-  int64 thumbnail_id = 3 [ jstype = JS_STRING ];
+  int64 upload_id = 2 [jstype = JS_STRING];
+  int64 thumbnail_id = 3 [jstype = JS_STRING];
   string title = 5;
   string description = 6;
   Visibility visibility = 7;
 }
-message VideosCreateResponse { int64 id = 1; }
-message GetUserVideosRequest { int64 id = 1; }
+message VideosCreateResponse {
+  int64 id = 1;
+}
+message GetUserVideosRequest {
+  int64 id = 1;
+  string session = 2;
+}
+
 message GetUserVideosResponse {
   repeated GetUserVideosResponseVideo videos = 1;
 }
 message GetUserVideosResponseVideo {
-  int64 id = 1 [ jstype = JS_STRING ];
+  int64 id = 1 [jstype = JS_STRING];
   string title = 2;
   Visibility visibility = 3;
   int64 created_at = 4;
-  int64 thumbnail_id = 5 [ jstype = JS_STRING ];
+  int64 thumbnail_id = 5 [jstype = JS_STRING];
   Stage stage = 6;
 }
 
@@ -57,10 +70,10 @@ message DeleteVideoRequest {
   string session = 1;
   int64 video_id = 2;
 }
-message DeleteVideoResponse {};
+message DeleteVideoResponse {}
 
-message GetUserFollowingVideosRequest {};
-message GetUserFollowingVideosResponse {};
+message GetUserFollowingVideosRequest {}
+message GetUserFollowingVideosResponse {}
 service Thumbnails {
   rpc CreateUpload(CreateUploadRequest) returns (CreateUploadResponse);
   rpc Process(ThumbnailsProcessRequest) returns (ThumbnailsProcessResponse);
@@ -70,21 +83,23 @@ message ThumbnailsProcessRequest {
   string session = 1;
   int64 id = 2;
 }
-message ThumbnailsProcessResponse {};
+message ThumbnailsProcessResponse {}
 
 message GetVideoRequest {
   string session = 1;
   int64 id = 2;
 }
 message GetVideoResponse {
-  int64 id = 1 [ jstype = JS_STRING ];
+  int64 id = 1 [jstype = JS_STRING];
   string title = 2;
   Visibility visibility = 3;
   int64 created_at = 4;
-  int64 thumbnail_id = 5 [ jstype = JS_STRING ];
-  int64 upload_id = 6 [ jstype = JS_STRING ];
-  int64 user_id = 7 [ jstype = JS_STRING ];
+  int64 thumbnail_id = 5 [jstype = JS_STRING];
+  int64 upload_id = 6 [jstype = JS_STRING];
+  int64 user_id = 7 [jstype = JS_STRING];
   Stage stage = 8;
+  string authorization_payload = 9;
+  string authorization_signature = 10;
 }
 enum Visibility {
   Public = 0;

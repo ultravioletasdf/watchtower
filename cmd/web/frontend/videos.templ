@@ -17,6 +17,15 @@ templ ViewVideo(user *proto.User, video *proto.GetVideoResponse) {
 	}
 }
 
+templ VideoError(user *proto.User, err string) {
+	@AppLayout(user) {
+		<div class="aspect-video w-full flex items-center justify-center gap-2 bg-base-300 rounded-xl border border-base-10p">
+			@icons.TriangleAlert(icons.IconProps{Class: "size-8"})
+			{ err }
+		</div>
+	}
+}
+
 templ VideoStatusPoller(video *proto.GetVideoResponse) {
 	<div id="poller">
 		if video.Stage == proto.Stage_FlaggedForNudity {
@@ -25,7 +34,7 @@ templ VideoStatusPoller(video *proto.GetVideoResponse) {
 				This video was flagged for nudity
 			</div>
 		} else if video.Stage == proto.Stage_Processed {
-			<media-player autoplay src={ fmt.Sprintf("http://localhost:9000/videos/%d/master.m3u8", video.UploadId) }>
+			<media-player autoplay src={ fmt.Sprintf("http://localhost:4000/videos/%d/master.m3u8", video.UploadId) }>
 				<media-provider></media-provider>
 				<media-video-layout thumbnails={ fmt.Sprintf("http://localhost:9000/videos/%d/thumbnails.vtt", video.UploadId) }></media-video-layout>
 			</media-player>
@@ -40,5 +49,20 @@ templ VideoStatusPoller(video *proto.GetVideoResponse) {
 				}
 			</div>
 		}
+		<script>
+		// These parameters are used to authorize the CDN
+		document.querySelector('media-player').addEventListener('provider-change', (event) => {
+            const provider = event.detail;
+            if (provider?.$$PROVIDER_TYPE === 'HLS') {
+                provider.config = {
+                    // Pass authorization headers to the CDN
+                    xhrSetup(xhr, url) {
+                        xhr.setRequestHeader("wt-payload", "{{ video.AuthorizationPayload }}")
+                        xhr.setRequestHeader("wt-sig", "{{ video.AuthorizationSignature }}")
+                    },
+                };
+            }
+        });
+		</script>
 	</div>
 }

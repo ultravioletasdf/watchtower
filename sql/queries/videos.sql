@@ -24,11 +24,16 @@ ORDER BY v.created_at DESC;
 SELECT id, title, visibility, created_at, thumbnail_id, stage
 FROM videos
 WHERE user_id = $1
+    AND (@show_private::BOOL OR visibility = 0)
 ORDER BY created_at DESC;
 
 -- name: GetVideo :one
 SELECT * FROM videos
 WHERE id = $1;
+
+-- name: GetVideoByUploadId :one
+SELECT * FROM videos
+WHERE upload_id = $1;
 
 -- name: DeleteVideo :exec
 DELETE FROM videos
@@ -51,6 +56,7 @@ JOIN follows as f
 ON v.user_id = f.user_id
 WHERE f.follower_id = $1
 AND v.stage = 3
+AND visibility = 0
 
 ORDER BY v.id DESC
 LIMIT 10
