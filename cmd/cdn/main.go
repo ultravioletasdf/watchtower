@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/ecdsa"
 	"crypto/sha256"
 	"crypto/x509"
@@ -75,8 +76,13 @@ func getResource(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pl := r.Header.Get("wt-payload")
+	if pl == "" {
+		pl = r.URL.Query().Get("payload")
+	}
 	sig := r.Header.Get("wt-sig")
-
+	if sig == "" {
+		sig = r.URL.Query().Get("sig")
+	}
 	if pl == "" || sig == "" {
 		w.WriteHeader(400)
 		return
@@ -117,10 +123,10 @@ func getResource(w http.ResponseWriter, r *http.Request) {
 	if time.Now().After(payload.ExpireAt) {
 		w.WriteHeader(403)
 	}
-	getObject(w, r, bucket, object)
+	getObject(w, r, bucket, object, pl, sig)
 }
 
-func getObject(w http.ResponseWriter, r *http.Request, bucket, object string) {
+func getObject(w http.ResponseWriter, r *http.Request, bucket, object, payload, sig string) {
 	filename := "cache/" + url.QueryEscape(object)
 	file, err := os.Open(filename)
 	// File isn't in disk cache, fetch from S3
@@ -140,6 +146,24 @@ func getObject(w http.ResponseWriter, r *http.Request, bucket, object string) {
 
 		w.Header().Set("Cache-Control", "max-age=31536000")
 
+		// Hijack thumbnails files to pass authentication into the storyboard image, caching the original but serving changed vtt
+		if strings.HasSuffix(object, "thumbnails.vtt") {
+			data, err := io.ReadAll(obj)
+			if err != nil {
+				http.Error(w, err.Error(), 500)
+				return
+			}
+			go func() {
+				file.Write(data)
+			}()
+			newData := bytes.ReplaceAll(data, []byte("storyboard.webp"), fmt.Appendf(nil, "storyboard.webp?payload=%s&sig=%s", payload, sig))
+			if _, err := w.Write(newData); err != nil {
+				http.Error(w, err.Error(), 500)
+				return
+			}
+			return
+		}
+
 		// Copy to http writer and disk writer simultaniously
 		multiwriter := io.MultiWriter(w, file)
 		if _, err := io.Copy(multiwriter, obj); err != nil {
@@ -152,7 +176,22 @@ func getObject(w http.ResponseWriter, r *http.Request, bucket, object string) {
 		fmt.Fprint(w, err)
 		return
 	}
+	defer file.Close()
 
+	// Hijack thumbnails files to pass authentication into the storyboard image
+	if strings.HasSuffix(object, "thumbnails.vtt") {
+		data, err := io.ReadAll(file)
+		if err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+		data = bytes.ReplaceAll(data, []byte("storyboard.webp"), fmt.Appendf(nil, "storyboard.webp?payload=%s&sig=%s", payload, sig))
+		if _, err := w.Write(data); err != nil {
+			http.Error(w, err.Error(), 500)
+			return
+		}
+		return
+	}
 	w.Header().Set("Cache-Control", "max-age=31536000")
 	// File was cached, serve
 	if _, err := io.Copy(w, file); err != nil {
