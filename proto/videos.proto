@@ -4,6 +4,8 @@ package watchtower;
 
 option go_package = "videoapp/internal/proto";
 
+import "messages.proto";
+
 service Videos {
   rpc CreateUpload(CreateUploadRequest) returns (CreateUploadResponse);
   rpc Create(VideosCreateRequest) returns (VideosCreateResponse);
@@ -13,6 +15,17 @@ service Videos {
   rpc GetStage(VideosGetStageRequest) returns (VideosGetStageResponse);
   rpc GetStages(VideosGetStagesRequest) returns (VideosGetStagesResponse);
   rpc Delete(DeleteVideoRequest) returns (DeleteVideoResponse);
+  rpc React(ReactRequest) returns (Empty);
+  rpc RemoveReaction(RemoveReactionRequest) returns (Empty);
+}
+message ReactRequest {
+    string session = 1;
+    int64 video_id = 2;
+    int32 type = 3;
+}
+message RemoveReactionRequest {
+    string session = 1;
+    int64 video_id = 2;
 }
 message VideosGetStageRequest {
   string session = 1;
@@ -90,16 +103,19 @@ message GetVideoRequest {
   int64 id = 2;
 }
 message GetVideoResponse {
-  int64 id = 1 [jstype = JS_STRING];
+  int64 id = 1;
   string title = 2;
   Visibility visibility = 3;
   int64 created_at = 4;
-  int64 thumbnail_id = 5 [jstype = JS_STRING];
-  int64 upload_id = 6 [jstype = JS_STRING];
-  int64 user_id = 7 [jstype = JS_STRING];
+  int64 thumbnail_id = 5;
+  int64 upload_id = 6;
+  int64 user_id = 7;
   Stage stage = 8;
   string authorization_payload = 9;
   string authorization_signature = 10;
+  int64 likes = 11;
+  int64 dislikes = 12;
+  int32 user_reaction = 13;
 }
 enum Visibility {
   Public = 0;

@@ -133,7 +133,33 @@ func (s *userServer) Get(ctx context.Context, req *proto.UsersGetRequest) (*prot
 		IsFollowing: isFollowing,
 	}, nil
 }
+func (s *userServer) GetById(ctx context.Context, req *proto.UsersGetByIdRequest) (*proto.UsersGetResponse, error) {
+	user, err := executor.GetUserById(ctx, req.Id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, common.ErrUserNotFound
+	} else if err != nil {
+		return nil, common.ErrInternal(err)
+	}
 
+	var isFollowing bool
+	if req.Session != "" {
+		f, _ := executor.IsFollowing(ctx, sqlc.IsFollowingParams{UserID: user.ID, Token: req.Session})
+		isFollowing = f == 1
+	}
+	return &proto.UsersGetResponse{
+		User: &proto.User{
+			Id:             user.ID,
+			Email:          user.Email,
+			Username:       user.Username,
+			CreatedAt:      timestamppb.New(user.CreatedAt.Time),
+			Flags:          uint64(user.Flags),
+			FollowerCount:  user.FollowerCount,
+			FollowingCount: user.FollowingCount,
+			DisplayName:    user.DisplayName.String,
+			Description:    user.Description.String},
+		IsFollowing: isFollowing,
+	}, nil
+}
 func (s *userServer) GetFollowingVideos(ctx context.Context, req *proto.GetFollowingVideosRequest) (*proto.GetFollowingVideosResponse, error) {
 	videos, err := executor.GetUsersFollowingVideos(ctx, sqlc.GetUsersFollowingVideosParams{FollowerID: req.UserId, Offset: req.Page * 10})
 	if err != nil {

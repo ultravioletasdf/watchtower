@@ -6,14 +6,14 @@ import (
 )
 
 templ ButtonFollow(id int64) {
-	<button class="btn btn-accent btn-soft btn-sm" hx-post={ fmt.Sprintf("/follow/%d", id) } hx-swap="outerHTML">
+	<button class="btn btn-accent btn-soft btn-sm" hx-post={ fmt.Sprintf("/follow/%d", id) } hx-swap="outerHTML" hx-target="this">
 		@icons.Heart(icons.IconProps{Class: "size-3 fill-current stroke-0"})
 		Follow
 	</button>
 }
 
 templ ButtonUnfollow(id int64) {
-	<button class="btn btn-accent btn-sm" hx-delete={ fmt.Sprintf("/follow/%d", id) } hx-swap="outerHTML">
+	<button class="btn btn-accent btn-sm" hx-delete={ fmt.Sprintf("/follow/%d", id) } hx-swap="outerHTML" hx-target="this">
 		@icons.HeartCrack(icons.IconProps{Class: "size-4 stroke-2"})
 		Unfollow
 	</button>

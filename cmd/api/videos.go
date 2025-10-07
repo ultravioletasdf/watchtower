@@ -148,12 +148,21 @@ func (s *videoService) Get(ctx context.Context, req *proto.GetVideoRequest) (*pr
 		}
 	}
 
+	var userReaction int32
+	if req.Session != "" {
+		reaction, err := executor.GetReaction(ctx, sqlc.GetReactionParams{VideoID: req.Id, Token: req.Session})
+		if !errors.Is(err, sql.ErrNoRows) && err != nil {
+			return nil, common.ErrInternal(err)
+		}
+		userReaction = reaction
+	}
+
 	payload, sig, err := utils.GeneratePresignedUrl(privateKey, v.UploadID, req.Session)
 	if err != nil {
 		return nil, err
 	}
 
-	return &proto.GetVideoResponse{Id: v.ID, Title: v.Title, Visibility: proto.Visibility(v.Visibility), CreatedAt: v.CreatedAt.Time.Unix(), ThumbnailId: v.ThumbnailID, UploadId: v.UploadID, UserId: v.UserID, Stage: proto.Stage(v.Stage), AuthorizationPayload: payload, AuthorizationSignature: sig}, nil
+	return &proto.GetVideoResponse{Id: v.ID, Title: v.Title, Visibility: proto.Visibility(v.Visibility), CreatedAt: v.CreatedAt.Time.Unix(), ThumbnailId: v.ThumbnailID, UploadId: v.UploadID, UserId: v.UserID, Stage: proto.Stage(v.Stage), AuthorizationPayload: payload, AuthorizationSignature: sig, Likes: v.Likes, Dislikes: v.Dislikes, UserReaction: userReaction}, nil
 }
 func (s *videoService) Delete(ctx context.Context, req *proto.DeleteVideoRequest) (*proto.DeleteVideoResponse, error) {
 	if len(req.Session) != SESSION_TOKEN_LENGTH {
@@ -208,4 +217,10 @@ func (s *videoService) GetStages(ctx context.Context, req *proto.VideosGetStages
 		return nil, common.ErrInternal(err)
 	}
 	return &proto.VideosGetStagesResponse{Result: string(json)}, nil
+}
+func (s *videoService) React(ctx context.Context, req *proto.ReactRequest) (*proto.Empty, error) {
+	return nil, common.ErrInternal(executor.React(ctx, sqlc.ReactParams{VideoID: req.VideoId, Type: req.Type, Token: req.Session}))
+}
+func (s *videoService) RemoveReaction(ctx context.Context, req *proto.RemoveReactionRequest) (*proto.Empty, error) {
+	return nil, common.ErrInternal(executor.RemoveReaction(ctx, sqlc.RemoveReactionParams{VideoID: req.VideoId, Token: req.Session}))
 }

@@ -182,35 +182,37 @@ func formatCount(n int64, word string, pluralize bool) string {
 }
 
 templ FollowUserList(users *proto.FollowUsers, id int64, t string, page int) {
-	for i, user := range users.Users {
-		<a
-			href={ fmt.Sprintf("/user/%s", user.Username) }
-			if len(users.Users) - 1 == i {
-				hx-get={ fmt.Sprintf("/user/%d/%s?page=%d", id, t, page) }
-				hx-trigger="intersect once"
-				hx-swap="afterend"
-			}
-		>
-			<li class="list-row items-center gap-2">
-				<div class="avatar size-8" x-data="{ image_found: true }">
-					<div class="size-8 rounded-full bg-base-300 flex! items-center justify-center">
-						<template x-if="image_found">
-							<img
-								id="avatar_preview"
-								src={ fmt.Sprintf("http://localhost:9000/avatars/%d.webp", user.UserId) }
-								@error="image_found = false"
-							/>
-						</template>
-						<template x-if="!image_found">
-							@icons.UserRound(icons.IconProps{Class: "size-4"})
-						</template>
+	if users != nil {
+		for i, user := range users.Users {
+			<a
+				href={ fmt.Sprintf("/user/%s", user.Username) }
+				if len(users.Users) - 1 == i {
+					hx-get={ fmt.Sprintf("/user/%d/%s?page=%d", id, t, page) }
+					hx-trigger="intersect once"
+					hx-swap="afterend"
+				}
+			>
+				<li class="list-row items-center gap-2">
+					<div class="avatar size-8" x-data="{ image_found: true }">
+						<div class="size-8 rounded-full bg-base-300 flex! items-center justify-center">
+							<template x-if="image_found">
+								<img
+									id="avatar_preview"
+									src={ fmt.Sprintf("http://localhost:9000/avatars/%d.webp", user.UserId) }
+									@error="image_found = false"
+								/>
+							</template>
+							<template x-if="!image_found">
+								@icons.UserRound(icons.IconProps{Class: "size-4"})
+							</template>
+						</div>
 					</div>
-				</div>
-				<div>
-					{ user.Username }
-					<div class="opacity-60 text-xs">{ formatDate(user.CreatedAt.Seconds) }</div>
-				</div>
-			</li>
-		</a>
+					<div>
+						{ user.Username }
+						<div class="opacity-60 text-xs">{ formatDate(user.CreatedAt.Seconds) }</div>
+					</div>
+				</li>
+			</a>
+		}
 	}
 }

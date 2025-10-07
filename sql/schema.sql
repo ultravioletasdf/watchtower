@@ -48,3 +48,10 @@ CREATE TABLE follows (
     created_at timestamptz NOT NULL DEFAULT NOW(),
     PRIMARY KEY (user_id, follower_id)
 );
+
+CREATE TABLE reactions (
+    video_id bigint NOT NULL REFERENCES videos (id) ON DELETE CASCADE,
+    user_id bigint NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    type int NOT NULL,
+    PRIMARY KEY (video_id, user_id)
+);

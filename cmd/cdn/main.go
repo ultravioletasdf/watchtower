@@ -122,6 +122,7 @@ func getResource(w http.ResponseWriter, r *http.Request) {
 	}
 	if time.Now().After(payload.ExpireAt) {
 		w.WriteHeader(403)
+		return
 	}
 	getObject(w, r, bucket, object, pl, sig)
 }
@@ -171,6 +172,7 @@ func getObject(w http.ResponseWriter, r *http.Request, bucket, object, payload, 
 			fmt.Println(err.Error())
 			return
 		}
+		return
 	} else if err != nil {
 		w.WriteHeader(500)
 		fmt.Fprint(w, err)

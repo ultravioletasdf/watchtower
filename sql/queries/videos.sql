@@ -28,8 +28,24 @@ WHERE user_id = $1
 ORDER BY created_at DESC;
 
 -- name: GetVideo :one
-SELECT * FROM videos
-WHERE id = $1;
+SELECT
+    v.*,
+    COALESCE(likes.count, 0) AS likes,
+    COALESCE(dislikes.count, 0) AS dislikes
+FROM videos v
+LEFT JOIN (
+    SELECT video_id, COUNT(*) AS count
+    FROM reactions
+    WHERE type = 1
+    GROUP BY video_id
+) AS likes ON likes.video_id = v.id
+LEFT JOIN (
+    SELECT video_id, COUNT(*) AS count
+    FROM reactions
+    WHERE type = 2
+    GROUP BY video_id
+) AS dislikes ON dislikes.video_id = v.id
+WHERE v.id = $1;
 
 -- name: GetVideoByUploadId :one
 SELECT * FROM videos

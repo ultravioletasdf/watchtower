@@ -59,6 +59,24 @@ LEFT JOIN (
 ) following ON following.follower_id = u.id
 WHERE username = $1;
 
+-- name: GetUserById :one
+SELECT
+    u.*,
+    COALESCE(followers.count, 0) AS follower_count,
+    COALESCE(following.count, 0) AS following_count
+FROM users u
+LEFT JOIN (
+    SELECT user_id, COUNT(*) AS count
+    FROM follows
+    GROUP BY user_id
+) followers ON followers.user_id = u.id
+LEFT JOIN (
+    SELECT follower_id, COUNT(*) AS count
+    FROM follows
+    GROUP BY follower_id
+) following ON following.follower_id = u.id
+WHERE id = $1;
+
 -- name: UpdateProfile :one
 UPDATE users
 SET display_name = COALESCE($1, display_name),

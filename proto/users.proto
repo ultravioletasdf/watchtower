@@ -6,20 +6,31 @@ option go_package = "videoapp/internal/proto";
 
 import "google/protobuf/timestamp.proto";
 import "videos.proto";
+import "messages.proto";
 
 service Users {
   rpc Create(CreateRequest) returns (CreateResponse);
+  rpc Get(UsersGetRequest) returns (UsersGetResponse);
+  rpc GetById(UsersGetByIdRequest) returns (UsersGetResponse);
+
   rpc Verify(VerifyRequest) returns (Empty);
+
   rpc Follow(FollowRequest) returns (Empty);
   rpc Unfollow(FollowRequest) returns (Empty);
-  rpc Get(UsersGetRequest) returns (UsersGetResponse);
+
   rpc GetFollowers(GetFollowsRequest) returns (FollowUsers);
   rpc GetFollowing(GetFollowsRequest) returns (FollowUsers);
   rpc GetFollowingVideos(GetFollowingVideosRequest)
       returns (GetFollowingVideosResponse);
+
   rpc UploadAvatar(UploadAvatarRequest) returns (Empty);
   rpc RemoveAvatar(Session) returns (Empty);
   rpc UpdateProfile(UpdateProfileRequest) returns (Empty);
+}
+
+message UsersGetByIdRequest {
+    int64 id = 1;
+    string session = 2;
 }
 
 message UpdateProfileRequest {
@@ -47,7 +58,6 @@ message Video {
   Stage stage = 6;
   int64 user_id = 7;
 }
-message Empty {};
 message CreateRequest {
   string email = 1;
   string username = 2;

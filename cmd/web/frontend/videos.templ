@@ -6,14 +6,88 @@ import (
 	"videoapp/internal/generated/proto"
 )
 
+var iconSize = icons.IconProps{Class: "size-4"}
+var likeScript = `
+	if (reaction == 1) {
+		likeCount--
+	} else if (reaction == 2) {
+		dislikeCount--; likeCount++
+	} else {
+		likeCount++
+	};
+	if (reaction == 1) {
+		reaction = 0;
+		htmx.ajax('DELETE', '/videos/%d/reaction', { swap: 'none' })
+	} else {
+		reaction = 1;
+		htmx.ajax('PUT', '/videos/%d/react/1', { swap: 'none' })
+	};`
+var dislikeScript = `
+	if (reaction == 2) {
+		dislikeCount--
+	} else if (reaction == 1) {
+		likeCount--; dislikeCount++
+	} else {
+		dislikeCount++
+	};
+	if (reaction == 2) {
+		reaction = 0;
+		htmx.ajax('DELETE', '/videos/%d/reaction', { swap: 'none' })
+	} else {
+		reaction = 2;
+		htmx.ajax('PUT', '/videos/%d/react/2', { swap: 'none' })
+	};`
+
 templ ViewVideo(user *proto.User, video *proto.GetVideoResponse) {
 	<link rel="stylesheet" href="https://cdn.vidstack.io/player/theme.css"/>
 	<link rel="stylesheet" href="https://cdn.vidstack.io/player/video.css"/>
 	<script src="https://cdn.vidstack.io/player" type="module"></script>
 	@AppLayout(user) {
-		{ video.Title }
-		{ formatDate(video.CreatedAt) }
 		@VideoStatusPoller(video)
+		<div class="flex justify-between pt-2 lg:w-3/4">
+			<div class="flex flex-col">
+				<span class="text-xl font-bold">{ video.Title }</span>
+				// { formatDate(video.CreatedAt) }
+				<div class="flex flex-row gap-2 items-center">
+					<div class="avatar" x-data="{ image_found: true }">
+						<div class="w-12 rounded-full bg-base-300 flex! items-center justify-center">
+							<template x-if="image_found">
+								<img
+									id="avatar_preview"
+									src={ fmt.Sprintf("http://localhost:9000/avatars/%d.webp", video.UserId) }
+									@error="image_found = false"
+								/>
+							</template>
+							<template x-if="!image_found">
+								@icons.UserRound(icons.IconProps{Class: "size-6"})
+							</template>
+						</div>
+					</div>
+					// Load extra user information
+					<div class="flex flex-row gap-4 items-center" id="extrauserinfo" hx-get={ fmt.Sprintf("/user/%d/extrainfo", video.UserId) } hx-trigger="load" hx-target="#extrauserinfo"></div>
+				</div>
+			</div>
+			<div>
+				<div class="join" x-data={ fmt.Sprintf("{ reaction: %d, likeCount: %d, dislikeCount: %d }", video.UserReaction, video.Likes, video.Dislikes) }>
+					<button
+						class="btn btn-sm join-item rounded-l-full"
+						:class="reaction == 1 && 'btn-primary'"
+						@click={ fmt.Sprintf(likeScript, video.Id, video.Id) }
+					>
+						@icons.ThumbsUp(iconSize)
+						<div x-text="likeCount"></div>
+					</button>
+					<button
+						class="btn btn-sm join-item rounded-r-full"
+						:class="reaction == 2 && 'btn-primary'"
+						@click={ fmt.Sprintf(dislikeScript, video.Id, video.Id) }
+					>
+						@icons.ThumbsDown(iconSize)
+						<div x-text="dislikeCount"></div>
+					</button>
+				</div>
+			</div>
+		</div>
 	}
 }
 
@@ -27,7 +101,7 @@ templ VideoError(user *proto.User, err string) {
 }
 
 templ VideoStatusPoller(video *proto.GetVideoResponse) {
-	<div id="poller">
+	<div id="poller" class="lg:w-3/4">
 		if video.Stage == proto.Stage_FlaggedForNudity {
 			<div class="aspect-video w-full flex items-center justify-center gap-2 bg-base-300 rounded-xl border border-base-10p">
 				@icons.TriangleAlert(icons.IconProps{Class: "size-8"})
@@ -49,7 +123,7 @@ templ VideoStatusPoller(video *proto.GetVideoResponse) {
 				}
 			</div>
 		}
-		<script type="module">
+		<script>
 		// These parameters are used to authorize the CDN
 		document.querySelector('media-player').addEventListener('provider-change', (event) => {
             const provider = event.detail;
@@ -65,4 +139,18 @@ templ VideoStatusPoller(video *proto.GetVideoResponse) {
         });
 		</script>
 	</div>
+}
+
+templ ExtraUserInfo(user *proto.UsersGetResponse, viewingUser *proto.User) {
+	<div class="flex flex-col leading-none">
+		<div>{ user.User.Username }</div>
+		<div class="text-sm opacity-80">{ formatCount(user.User.FollowerCount, "Follower", true) }</div>
+	</div>
+	if user == nil || (viewingUser != nil && viewingUser.Id != user.User.Id) {
+		if user.IsFollowing {
+			@ButtonUnfollow(user.User.Id)
+		} else {
+			@ButtonFollow(user.User.Id)
+		}
+	}
 }

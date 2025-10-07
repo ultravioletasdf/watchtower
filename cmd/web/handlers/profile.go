@@ -82,6 +82,8 @@ func getFollowsModal(c *fiber.Ctx) error {
 		result, err = deps.Clients.Users.GetFollowers(c.Context(), &proto.GetFollowsRequest{UserId: id, Page: int32(page)})
 	case "follows":
 		result, err = deps.Clients.Users.GetFollowing(c.Context(), &proto.GetFollowsRequest{UserId: id, Page: int32(page)})
+	default:
+		return c.Next()
 	}
 
 	if err != nil {
