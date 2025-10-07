@@ -30,7 +30,7 @@ ORDER BY f.created_at DESC
 LIMIT $2 OFFSET $3;
 
 -- name: GetUserFollowers :many
-SELECT f.user_id, f.created_at, u.username FROM follows f
+SELECT f.follower_id, f.created_at, u.username FROM follows f
 LEFT JOIN users u ON f.follower_id = u.id
 WHERE f.user_id = $1
 ORDER BY f.created_at DESC

@@ -91,7 +91,7 @@ func (s *userServer) GetFollowers(ctx context.Context, req *proto.GetFollowsRequ
 	}
 	followsProto := make([]*proto.FollowUser, len(follows))
 	for i := range follows {
-		followsProto[i] = &proto.FollowUser{UserId: follows[i].UserID, CreatedAt: timestamppb.New(follows[i].CreatedAt.Time), Username: follows[i].Username.String}
+		followsProto[i] = &proto.FollowUser{UserId: follows[i].FollowerID, CreatedAt: timestamppb.New(follows[i].CreatedAt.Time), Username: follows[i].Username.String}
 	}
 	return &proto.FollowUsers{Users: followsProto}, nil
 }
