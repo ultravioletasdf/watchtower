@@ -40,7 +40,7 @@ func main() {
 	mux.HandleFunc("GET /{bucket}/{object...}", getResource)
 
 	handler := cors.AllowAll().Handler(mux)
-	http.ListenAndServe(":4000", handler)
+	panic(http.ListenAndServe(":4000", handler))
 }
 
 type PresignedToken struct {

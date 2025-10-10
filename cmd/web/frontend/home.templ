@@ -17,96 +17,38 @@ templ Home(user *proto.User) {
 templ AppLayout(user *proto.User) {
 	@Base() {
 		<div class="flex flex-col h-full">
-			@Nav(user)
-			@Sidebar() {
+			@Sidebar(user) {
 				{ children... }
 			}
 		</div>
 	}
 }
 
-templ Nav(user *proto.User) {
-	<div class="bg-base-200 flex w-full flex-shrink items-center justify-between px-8 py-4">
-		<div class="flex items-center gap-2 font-bold select-none">
-			<svg class="size-6" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
-				<path
-					d="M40 16C46.6274 16 52 21.3726 52 28V40C52 46.6274 57.3726 52 64 52H102C108.627 52 114 46.6274 114 40V28C114 21.3726 119.373 16 126 16H174C180.627 16 186 21.3726 186 28V40C186 46.6274 191.373 52 198 52H236C242.627 52 248 46.6274 248 40V28C248 21.3726 253.373 16 260 16H288C294.627 16 300 21.3726 300 28V88C300 94.6274 294.627 100 288 100H269V155.553L241.185 122.312C218.739 95.488 185.513 80 150.5 80C116.034 80 83.2987 95.0072 60.875 121.062L59.8154 122.312L32 155.553V100H12C5.37259 100 0 94.6274 0 88V28C0 21.3726 5.37258 16 12 16H40Z"
-					fill="#F54900"
-				></path>
-				<path
-					fill-rule="evenodd"
-					clip-rule="evenodd"
-					d="M28 191.5L75.1541 135.146C93.7883 112.876 121.392 100 150.5 100C179.608 100 207.211 112.876 225.847 135.146L273 191.5L225.847 247.853C207.211 270.124 179.608 283 150.5 283C121.392 283 93.7883 270.124 75.1541 247.853L28 191.5ZM150.5 237.25C175.871 237.25 196.438 216.767 196.438 191.5C196.438 166.233 175.871 145.75 150.5 145.75C125.129 145.75 104.562 166.233 104.562 191.5C104.562 216.767 125.129 237.25 150.5 237.25Z"
-					fill="currentColor"
-				></path>
-				<path
-					d="M150.5 165.75C164.902 165.75 176.438 177.356 176.438 191.5C176.438 205.644 164.902 217.25 150.5 217.25C136.098 217.25 124.563 205.644 124.563 191.5C124.563 177.356 136.098 165.75 150.5 165.75Z"
-					fill="currentColor"
-				></path>
-				<path
-					fill-rule="evenodd"
-					clip-rule="evenodd"
-					d="M150.5 100C179.608 100 207.211 112.876 225.847 135.146L269 186.719V192L158 261L32 192V186.719L75.1541 135.146C93.7883 112.876 121.392 100 150.5 100ZM150.5 145.75C125.129 145.75 104.562 166.233 104.562 191.5C104.562 216.767 125.129 237.25 150.5 237.25C175.871 237.25 196.438 216.767 196.438 191.5C196.438 166.233 175.871 145.75 150.5 145.75Z"
-					fill="currentColor"
-				></path>
-			</svg>
-			WatchTower
-		</div>
-		<div class="dropdown dropdown-end select-none cursor-pointer">
-			<div tabindex="0" role="button" class="avatar" x-data="{ image_found: true }">
-				<div class="w-8 rounded-full bg-base-300 flex! items-center justify-center">
-					if user == nil {
-						@icons.UserRound(icons.IconProps{Class: "size-4"})
-					} else {
-						<template x-if="image_found">
-							<img
-								id="avatar_preview"
-								src={ fmt.Sprintf("http://localhost:9000/avatars/%d.webp", user.Id) }
-								@error="image_found = false"
-							/>
-						</template>
-						<template x-if="!image_found">
-							@icons.UserRound(icons.IconProps{Class: "size-4"})
-						</template>
-					}
-				</div>
-			</div>
-			<ul class="dropdown-content menu bg-base-300 rounded-box z-1 w-52 p-2">
-				if user == nil {
-					<li tabindex="0">
-						<a href="/sign/in">
-							@icons.LogIn(icons.IconProps{Class: "size-4"})
-							Sign In
-						</a>
-					</li>
-				} else {
-					<li tabindex="0">
-						<a class="group" href="/settings">
-							@icons.Cog(icons.IconProps{Class: "size-4 transition-transform duration-750 group-hover:rotate-180"})
-							Settings
-						</a>
-					</li>
-					<li tabindex="0">
-						<a href={ fmt.Sprintf("/user/%s", user.Username) }>
-							@icons.User(icons.IconProps{Class: "size-4"})
-							Profile
-						</a>
-					</li>
-					<li tabindex="0">
-						<a href="/upload">
-							@icons.Upload(icons.IconProps{Class: "size-4"})
-							Upload
-						</a>
-					</li>
-					<li tabindex="0">
-						<a href="/sign/out">
-							@icons.LogOut(icons.IconProps{Class: "size-4"})
-							Sign  Out
-						</a>
-					</li>
-				}
-			</ul>
-		</div>
+templ Wordmark() {
+	<div class="flex items-center gap-2 font-bold select-none">
+		<svg class="size-6" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+			<path
+				d="M40 16C46.6274 16 52 21.3726 52 28V40C52 46.6274 57.3726 52 64 52H102C108.627 52 114 46.6274 114 40V28C114 21.3726 119.373 16 126 16H174C180.627 16 186 21.3726 186 28V40C186 46.6274 191.373 52 198 52H236C242.627 52 248 46.6274 248 40V28C248 21.3726 253.373 16 260 16H288C294.627 16 300 21.3726 300 28V88C300 94.6274 294.627 100 288 100H269V155.553L241.185 122.312C218.739 95.488 185.513 80 150.5 80C116.034 80 83.2987 95.0072 60.875 121.062L59.8154 122.312L32 155.553V100H12C5.37259 100 0 94.6274 0 88V28C0 21.3726 5.37258 16 12 16H40Z"
+				fill="#F54900"
+			></path>
+			<path
+				fill-rule="evenodd"
+				clip-rule="evenodd"
+				d="M28 191.5L75.1541 135.146C93.7883 112.876 121.392 100 150.5 100C179.608 100 207.211 112.876 225.847 135.146L273 191.5L225.847 247.853C207.211 270.124 179.608 283 150.5 283C121.392 283 93.7883 270.124 75.1541 247.853L28 191.5ZM150.5 237.25C175.871 237.25 196.438 216.767 196.438 191.5C196.438 166.233 175.871 145.75 150.5 145.75C125.129 145.75 104.562 166.233 104.562 191.5C104.562 216.767 125.129 237.25 150.5 237.25Z"
+				fill="currentColor"
+			></path>
+			<path
+				d="M150.5 165.75C164.902 165.75 176.438 177.356 176.438 191.5C176.438 205.644 164.902 217.25 150.5 217.25C136.098 217.25 124.563 205.644 124.563 191.5C124.563 177.356 136.098 165.75 150.5 165.75Z"
+				fill="currentColor"
+			></path>
+			<path
+				fill-rule="evenodd"
+				clip-rule="evenodd"
+				d="M150.5 100C179.608 100 207.211 112.876 225.847 135.146L269 186.719V192L158 261L32 192V186.719L75.1541 135.146C93.7883 112.876 121.392 100 150.5 100ZM150.5 145.75C125.129 145.75 104.562 166.233 104.562 191.5C104.562 216.767 125.129 237.25 150.5 237.25C175.871 237.25 196.438 216.767 196.438 191.5C196.438 166.233 175.871 145.75 150.5 145.75Z"
+				fill="currentColor"
+			></path>
+		</svg>
+		<span x-show="open">WatchTower</span>
 	</div>
 }
 
@@ -116,19 +58,75 @@ type Item struct {
 	Icon  templ.Component
 }
 
-templ Sidebar() {
-	<div class="flex grow">
-		<div class="h-full bg-base-200 min-w-64 flex flex-col p-2">
-			{{ links := []Item{{Title: "Home", Url: "/", Icon: icons.House(icons.IconProps{Class: "size-4"})}, {Title: "Following", Url: "/following", Icon: icons.Heart(icons.IconProps{Class: "size-4"})}} }}
+func ProfileLink(user *proto.User) string {
+	if user == nil {
+		return "/sign/in"
+	}
+	return fmt.Sprintf("/user/%s", user.Username)
+}
+
+templ Sidebar(user *proto.User) {
+	<div class="flex grow fixed w-full">
+		<div class="h-dvh bg-base-200 flex flex-col p-2 items-center" x-data="{ open: $persist(true) }" :class="open && 'min-w-64'">
+			<div class="p-2 flex gap-1 justify-between items-center w-full " :class="open ? 'pl-4' : 'flex-col p-3'">
+				@Wordmark()
+				<button @click="open = !open" class="btn btn-ghost btn-square group">
+					@icons.PanelLeftClose(icons.IconProps{Class: "size-4 transition-transform duration-250 group-hover:-translate-x-[2px]", Attributes: templ.Attributes{"x-show": "open"}})
+					@icons.PanelLeftOpen(icons.IconProps{Class: "size-4 transition-transform duration-250 group-hover:translate-x-[2px]", Attributes: templ.Attributes{"x-show": "!open"}})
+				</button>
+			</div>
+			{{
+				links := []Item{
+					{Title: "Home", Url: "/", Icon: icons.House(icons.IconProps{Class: "size-4"})},
+					{Title: "Following", Url: "/following", Icon: icons.Heart(icons.IconProps{Class: "size-4 transition-transform duration-250 group-hover:scale-125"})},
+				}
+				bottomLinks := []Item{}
+				if user != nil {
+					bottomLinks = append(bottomLinks,
+						Item{Title: "Settings", Url: "/settings", Icon: icons.Cog(icons.IconProps{Class: "size-4 transition-transform duration-750 group-hover:rotate-180"})},
+						Item{Title: "Upload", Url: "/upload", Icon: icons.Upload(icons.IconProps{Class: "size-4 transition-transform duration-250 group-hover:-translate-y-[2px]"})},
+						Item{Title: "Sign Out", Url: "/sign/out", Icon: icons.LogOut(icons.IconProps{Class: "size-4 transition-transform duration-250 group-hover:translate-x-[2px]"})},
+					)
+				}
+			}}
 			for _, link := range links {
-				<a class="flex text-sm items-center p-2 rounded gap-2 hover:bg-base-10p transition" href={ link.Url }>
-					@link.Icon
-					{ link.Title }
+				@SidebarLink(link)
+			}
+			<div class="mt-auto"></div>
+			for _, link := range bottomLinks {
+				@SidebarLink(link)
+			}
+			if user == nil {
+				@SidebarLink(Item{Title: "Sign In", Url: "/sign/in", Icon: icons.LogIn(icons.IconProps{Class: "size-4"})})
+			} else {
+				<a href={ ProfileLink(user) } class="btn btn-ghost w-full text-md font-normal h-fit" :class="open ? 'btn-block justify-start py-4' : 'btn-square p-4'">
+					<div class="avatar" x-data="{ image_found: true }">
+						<div class="w-8 rounded-full bg-base-300 flex! items-center justify-center">
+							<template x-if="image_found">
+								<img
+									id="avatar_preview"
+									src={ fmt.Sprintf("http://localhost:9000/avatars/%d.webp", user.Id) }
+									@error="image_found = false"
+								/>
+							</template>
+							<template x-if="!image_found">
+								@icons.UserRound(icons.IconProps{Class: "size-4"})
+							</template>
+						</div>
+					</div>
+					<div x-show="open">{ user.Username }</div>
 				</a>
 			}
 		</div>
-		<div class="grow flex flex-col p-8">
+		<div class="grow flex flex-col p-8 overflow-y-scroll h-dvh">
 			{ children... }
 		</div>
 	</div>
+}
+
+templ SidebarLink(link Item) {
+	<a class="btn font-normal group " href={ link.Url } :class={ fmt.Sprintf("(open ? 'btn-block justify-start' : 'btn-square') + ((window.location.pathname == '%s') ? '' : ' btn-ghost')", link.Url) }>
+		@link.Icon
+		<span x-show="open">{ link.Title }</span>
+	</a>
 }
