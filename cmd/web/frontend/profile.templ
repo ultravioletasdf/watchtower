@@ -10,47 +10,34 @@ templ Profile(viewingUser *proto.User, videos []*proto.GetUserVideosResponseVide
 	<script>
 		let toPoll = []
 		function poll(id) {
-		    console.log("Polling " + id)
-			toPoll.push(id)
+		  console.log("Polling " + id)
+  	  toPoll.push(id)
 		}
 
 		const refreshStagesId = setInterval(async () => {
-		    if (toPoll.length == 0) {
-				console.log("Nothing to poll.")
-				clearInterval(refreshStagesId)
-				return
-			}
-		    console.log("Refreshing stages")
+		  if (toPoll.length == 0) {
+	  	  console.log("Nothing to poll.")
+    		clearInterval(refreshStagesId)
+  		  return
+  		}
+	  	console.log("Refreshing stages")
 			const res = await fetch("/stages", {
-			    method: 'POST',
-			    headers: {
-					'Content-Type': 'application/json'
-				},
+			  method: 'POST',
+			  headers: {
+		  	  'Content-Type': 'application/json'
+			  },
 				body: JSON.stringify(toPoll)
 			})
 			let json = await res.json()
 			Alpine.store("stages", json)
-		},  15000)
+		}, 15000)
 		document.addEventListener("alpine:initializing", () => {
-    		Alpine.store("stages", {})
+    	Alpine.store("stages", {})
 		})
 	</script>
 	@AppLayout(viewingUser) {
 		<div class="flex text-sm items-center gap-2">
-			<div class="avatar" x-data="{ image_found: true }">
-				<div class="w-16 rounded-full bg-base-300 flex! items-center justify-center">
-					<template x-if="image_found">
-						<img
-							id="avatar_preview"
-							src={ fmt.Sprintf("http://localhost:9000/avatars/%d.webp", user.User.Id) }
-							@error="image_found = false"
-						/>
-					</template>
-					<template x-if="!image_found">
-						@icons.UserRound(icons.IconProps{Class: "size-6"})
-					</template>
-				</div>
-			</div>
+			@Avatar(user.User.Id, "w-16")
 			<div class="flex flex-col">
 				<div class="font-bold text-lg leading-tight">
 					if user.User.DisplayName == "" {
@@ -65,9 +52,9 @@ templ Profile(viewingUser *proto.User, videos []*proto.GetUserVideosResponseVide
 					}
 					<button class="opacity-70 cursor-pointer hover:opacity-100" onclick="following.showModal()">{ formatCount(user.User.FollowingCount, "Following", false) }</button>
 					<button class="opacity-70 cursor-pointer hover:opacity-100" onclick="followers.showModal()">{ formatCount(user.User.FollowerCount, "Follower", true) }</button>
-					// Hide option to follow yourself
 				</div>
 			</div>
+			<!-- Hide option to follow yourself -->
 			if viewingUser == nil || (viewingUser != nil && viewingUser.Id != user.User.Id) {
 				if user.IsFollowing {
 					@ButtonUnfollow(user.User.Id)
@@ -83,46 +70,7 @@ templ Profile(viewingUser *proto.User, videos []*proto.GetUserVideosResponseVide
 			<a role="tab" class="tab tab-active">Videos</a>
 			<a role="tab" class="tab">Playlists</a>
 		</div>
-		<div class="gap-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mt-1">
-			for _, v := range videos {
-				<a class="rounded-lg bg-base-200 transition shadow-none scale-100 hover:scale-105 pb-4 hover:shadow-[0px_45px_23px_-26px_rgba(0,_0,_0,_0.4)]" href={ templ.SafeURL(fmt.Sprintf("/videos/%d", v.Id)) }>
-					{{
-						flagged := v.Stage == proto.Stage_FlaggedForNudity
-						notProcessed := !flagged && v.Stage != proto.Stage_Processed
-						opacity := 0.0
-						if notProcessed || flagged {
-							opacity = 0.6
-						}
-
-						isFlaggedReactive := fmt.Sprintf("($store.stages['%d'] === %d)", v.Id, proto.Stage_FlaggedForNudity)
-					}}
-					<div
-						class={ "bg-base bg-cover bg-center aspect-video rounded flex items-center justify-center ", BackgroundThumbnail(v.ThumbnailId) }
-						style={ fmt.Sprintf("--opacity: %f", opacity) }
-						if notProcessed {
-							x-init={ fmt.Sprintf("poll('%d')", v.Id) }
-							x-data
-							x-bind:style={ fmt.Sprintf("$store.stages['%d'] !== %d ? { '--opacity': 0.6 } : { '--opacity': 0.0 }", v.Id, proto.Stage_Processed) }
-						}
-					>
-						if notProcessed {
-							// shows when flagged for nudity
-							@icons.TriangleAlert(icons.IconProps{Class: "size-6", Attributes: templ.Attributes{"x-show": isFlaggedReactive}})
-							// shows when not processed and not flagged for nudity
-							@icons.Cog(icons.IconProps{Class: "size-6 animate-spin", Attributes: templ.Attributes{"x-show": fmt.Sprintf("!%s && $store.stages['%d'] !== %d", isFlaggedReactive, v.Id, proto.Stage_Processed)}})
-						} else if flagged {
-							@icons.TriangleAlert(icons.IconProps{Class: "size-6"})
-						}
-					</div>
-					<div class="px-4 pt-4">
-						{ v.Title }
-						<div class="text-sm text-base-content/70">
-							{ formatDate(v.CreatedAt) }
-						</div>
-					</div>
-				</a>
-			}
-		</div>
+		@ProfileVideoList(videos)
 		<dialog id="following" class="modal">
 			<div class="modal-box">
 				<h3 class="text-lg font-bold">Following</h3>
@@ -148,6 +96,52 @@ templ Profile(viewingUser *proto.User, videos []*proto.GetUserVideosResponseVide
 			</form>
 		</dialog>
 	}
+}
+
+templ ProfileVideoList(videos []*proto.GetUserVideosResponseVideo) {
+	<div class="gap-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mt-1">
+		for _, v := range videos {
+			<a
+				class="rounded-lg bg-base-200 transition shadow-none scale-100 hover:scale-105 pb-4 hover:shadow-[0px_45px_23px_-26px_rgba(0,_0,_0,_0.4)]"
+				href={ templ.SafeURL(fmt.Sprintf("/videos/%d", v.Id)) }
+			>
+				{{
+					flagged := v.Stage == proto.Stage_FlaggedForNudity
+					notProcessed := !flagged && v.Stage != proto.Stage_Processed
+					opacity := 0.0
+					if notProcessed || flagged {
+						opacity = 0.6
+					}
+
+					isFlaggedReactive := fmt.Sprintf("($store.stages['%d'] === %d)", v.Id, proto.Stage_FlaggedForNudity)
+				}}
+				<div
+					class={ "bg-base bg-cover bg-center aspect-video rounded-t-lg flex items-center justify-center ", BackgroundThumbnail(v.ThumbnailId) }
+					style={ fmt.Sprintf("--opacity: %f", opacity) }
+					if notProcessed {
+						x-init={ fmt.Sprintf("poll('%d')", v.Id) }
+						x-data
+						x-bind:style={ fmt.Sprintf("$store.stages['%d'] !== %d ? { '--opacity': 0.6 } : { '--opacity': 0.0 }", v.Id, proto.Stage_Processed) }
+					}
+				>
+					if notProcessed {
+						// shows when flagged for nudity
+						@icons.TriangleAlert(icons.IconProps{Class: "size-6", Attributes: templ.Attributes{"x-show": isFlaggedReactive}})
+						// shows when not processed and not flagged for nudity
+						@icons.Cog(icons.IconProps{Class: "size-6 animate-spin", Attributes: templ.Attributes{"x-show": fmt.Sprintf("!%s && $store.stages['%d'] !== %d", isFlaggedReactive, v.Id, proto.Stage_Processed)}})
+					} else if flagged {
+						@icons.TriangleAlert(icons.IconProps{Class: "size-6"})
+					}
+				</div>
+				<div class="px-4 pt-4 leading-none">
+					{ v.Title }
+					<div class="text-sm text-base-content/70">
+						{ formatDate(v.CreatedAt) }
+					</div>
+				</div>
+			</a>
+		}
+	</div>
 }
 
 css BackgroundThumbnail(id int64) {
