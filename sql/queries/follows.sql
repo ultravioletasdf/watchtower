@@ -1,23 +1,23 @@
 -- name: FollowUser :exec
-WITH session AS (
+WITH user_session AS (
 	SELECT s.user_id
 	FROM sessions s
 	WHERE s.token = $1
 )
 INSERT INTO follows (user_id, follower_id)
-SELECT $2, session.user_id
-FROM session;
+SELECT $2, user_session.user_id
+FROM user_session;
 
 -- name: UnfollowUser :exec
-WITH session AS (
+WITH user_session AS (
 	SELECT s.user_id
 	FROM sessions s
 	WHERE s.token = $1
 )
 DELETE FROM follows f
-USING session
+USING user_session
 WHERE f.user_id = $2
-AND f.follower_id = session.user_id;
+AND f.follower_id = user_session.user_id;
 
 -- name: CountFollows :one
 SELECT count(*) FROM follows WHERE user_id = $1;

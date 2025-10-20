@@ -1,0 +1,140 @@
+package frontend
+
+import (
+	"fmt"
+	"github.com/bwmarrin/snowflake"
+	"github.com/dimmerz92/go-lucide-icons/pkg/templ/icons"
+	"videoapp/internal/generated/proto"
+)
+
+// Box for commenting on a video
+templ CommentBox(user *proto.User, video *proto.GetVideoResponse) {
+	if user != nil {
+		<!-- Form creates a comment and adds to the start of the list of comments -->
+		<form
+			hx-post={ fmt.Sprintf("/videos/%d/comments", video.Id) }
+			hx-target="#comments"
+			hx-swap="afterbegin"
+			class="flex lg:w-3/4 gap-4 mt-4 items-start"
+			x-data="{ comment: '' }"
+		>
+			@Avatar(user.Id, "size-10")
+			<!-- The @input attribute resize the textarea to fit the content -->
+			<textarea
+				x-data
+				maxlength="1000"
+				rows="1"
+				class="w-full resize-none textarea min-h-0"
+				placeholder="Add a comment"
+				name="comment"
+				@input='$el.style.height = "";$el.style.height = $el.scrollHeight + "px"'
+				x-model="comment"
+			></textarea>
+			<div class="flex flex-col items-center gap-1">
+				<!-- Comment Button -->
+				<button class="btn btn-primary" disabled="true" :disabled="comment.length === 0">Comment</button>
+				<!-- Character Count -->
+				<div class="text-sm opacity-80">
+					<span x-text="comment.length"></span>/1000
+				</div>
+			</div>
+		</form>
+	}
+}
+
+// Container for comments
+// Loads comments after page has loaded
+templ Comments(videoId int64) {
+	<div
+		id="comments"
+		class="flex flex-col gap-2"
+		hx-trigger="load"
+		hx-get={ fmt.Sprintf("/videos/%d/comments?page=0",
+  videoId) }
+		hx-target="this"
+		hx-swap="afterbegin"
+	></div>
+}
+
+templ Comment(c *proto.Comment) {
+	<div class="flex gap-2">
+		@UserLink(c.Username) {
+			@Avatar(c.UserId, "size-10")
+		}
+		<div class="flex flex-col">
+			<!-- Username and time -->
+			<span class="flex gap-1 text-sm">
+				@UserLink(c.Username) {
+					<span class="font-bold">{ c.Username }</span>
+				}
+				<span class="opacity-80">{ formatDate(snowflake.ParseInt64(c.Id).Time()/1000) }</span>
+			</span>
+			<span>{ c.Content } </span>
+			<!-- Interaction row -->
+			<div
+				class="flex text-sm mt-2 gap-1"
+				x-data={ fmt.Sprintf("{ reaction: %d, likeCount: %d, dislikeCount: %d }",
+      c.Reaction, c.Likes, c.Dislikes) }
+			>
+				<!-- Like -->
+				<button
+					class="btn btn-sm rounded-full"
+					:class="reaction == 1 && 'btn-primary'"
+					@click={ fmt.Sprintf(likeScript,
+        c.Id, c.Id) }
+				>
+					@icons.ThumbsUp(iconSize)
+					<div x-text="likeCount"></div>
+				</button>
+				<!-- Dislike -->
+				<button
+					class="btn btn-sm rounded-full"
+					:class="reaction == 2 && 'btn-primary'"
+					@click={ fmt.Sprintf(dislikeScript, c.Id, c.Id) }
+				>
+					@icons.ThumbsDown(iconSize)
+					<div x-text="dislikeCount"></div>
+				</button>
+				<!-- Reply -->
+				<div class="btn btn-sm rounded-full">
+					@icons.Reply(iconSize)
+					Reply
+				</div>
+				<!-- View Replies -->
+				<span class="btn btn-sm rounded-full w-fit btn-info">
+					@icons.ChevronDown(icons.IconProps{Class: "size-4"})
+					1 Reply
+				</span>
+			</div>
+		</div>
+	</div>
+}
+
+// Renders a list of comments
+templ CommentList(response *proto.ListCommentsResponse, videoId int64, page int32) {
+	for i, comment := range response.Comments {
+		<!-- Render the comment -->
+		@Comment(comment)
+		<!-- On the last comment, load more comments -->
+		if i == len(response.Comments)-1 {
+			<div
+				hx-trigger="intersect once"
+				hx-swap="beforeend"
+				hx-target="#comments"
+				hx-get={ fmt.Sprintf("/videos/%d/comments?page=%d", videoId, page+1) }
+			></div>
+		}
+	}
+}
+
+templ UserLink(username string) {
+	<a href={ fmt.Sprintf("/user/%s", username) }>
+		{ children... }
+	</a>
+}
+
+templ UserLinkId(id int64) {
+	<a href={ fmt.Sprintf("/user/id/%d", id) }>
+		{ children... }
+	</a>
+}

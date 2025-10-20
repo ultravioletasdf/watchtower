@@ -36,7 +36,7 @@ var (
 	ErrUnauthorized = status.Error(codes.PermissionDenied, "You do not have authorization to do that")
 	ErrInvalidImage = status.Error(codes.InvalidArgument, "We couldn't process the image you provided")
 
-	ErrBucketNotHandled = status.Error(codes.InvalidArgument, "We haven't set up a handler for that bucket or it doesn't exist")
+	ErrInvalidComment = status.Error(codes.InvalidArgument, "The comment should be between 3 and 1000 characters")
 )
 
 func ErrInternal(err error) error {

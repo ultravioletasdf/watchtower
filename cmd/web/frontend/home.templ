@@ -5,6 +5,7 @@ import (
 
 	"videoapp/internal/generated/proto"
 
+	twmerge "github.com/Oudwins/tailwind-merge-go"
 	"github.com/dimmerz92/go-lucide-icons/pkg/templ/icons"
 )
 
@@ -100,20 +101,7 @@ templ Sidebar(user *proto.User) {
 				@SidebarLink(Item{Title: "Sign In", Url: "/sign/in", Icon: icons.LogIn(icons.IconProps{Class: "size-4"})})
 			} else {
 				<a href={ ProfileLink(user) } class="btn btn-ghost w-full text-md font-normal h-fit" :class="open ? 'btn-block justify-start py-4' : 'btn-square p-4'">
-					<div class="avatar" x-data="{ image_found: true }">
-						<div class="w-8 rounded-full bg-base-300 flex! items-center justify-center">
-							<template x-if="image_found">
-								<img
-									id="avatar_preview"
-									src={ fmt.Sprintf("http://localhost:9000/avatars/%d.webp", user.Id) }
-									@error="image_found = false"
-								/>
-							</template>
-							<template x-if="!image_found">
-								@icons.UserRound(icons.IconProps{Class: "size-4"})
-							</template>
-						</div>
-					</div>
+					@Avatar(user.Id, "")
 					<div x-show="open">{ user.Username }</div>
 				</a>
 			}
@@ -129,4 +117,21 @@ templ SidebarLink(link Item) {
 		@link.Icon
 		<span x-show="open">{ link.Title }</span>
 	</a>
+}
+
+templ Avatar(userId int64, class string) {
+	<div class="avatar" x-data="{ image_found: true }">
+		<div class={ twmerge.Merge("w-8 rounded-full bg-base-300 flex! items-center justify-center", class) }>
+			<template x-if="image_found">
+				<img
+					id="avatar_preview"
+					src={ fmt.Sprintf("http://localhost:9000/avatars/%d.webp", userId) }
+					@error="image_found = false"
+				/>
+			</template>
+			<template x-if="!image_found">
+				@icons.UserRound(icons.IconProps{Class: "size-4"})
+			</template>
+		</div>
+	</div>
 }

@@ -23,6 +23,7 @@ type Dependencies struct {
 		Sessions   proto.SessionsClient
 		Videos     proto.VideosClient
 		Thumbnails proto.ThumbnailsClient
+		Reactions  proto.ReactionsClient
 	}
 }
 
@@ -45,6 +46,7 @@ func Add(app *fiber.App, dependencies Dependencies) {
 	app.Delete("/avatar", deleteAvatar)
 
 	app.Get("/user/:username", profile)
+	app.Get("/user/id/:id", profileFromId)
 	app.Get("/user/:id/:type", getFollowsModal)
 	app.Get("/user/:id/extrainfo", extraUserInfo)
 	app.Post("/stages", getStages)
@@ -53,8 +55,10 @@ func Add(app *fiber.App, dependencies Dependencies) {
 	app.Delete("/follow/:id", follow)
 
 	app.Get("/videos/:id", viewVideo)
-	app.Put("/videos/:id/react/:type", react)
-	app.Delete("/videos/:id/reaction", deleteReaction)
+	app.Put("/reactions/:id/:type", react)
+	app.Delete("/reactions/:id", deleteReaction)
+	app.Post("/videos/:id/comments", createComment)
+	app.Get("/videos/:id/comments", listComments)
 	app.Get("/status/:id", videoStatus)
 
 	app.Get("/following", following)

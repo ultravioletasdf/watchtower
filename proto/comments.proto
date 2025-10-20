@@ -1,0 +1,58 @@
+syntax = "proto3";
+
+package watchtower;
+
+option go_package = "videoapp/internal/proto";
+
+message Comment {
+  int64 id = 1;
+  int64 user_id = 2;
+  int64 video_id = 3;
+  int64 reference_id = 4;
+  string content = 5;
+  string username = 6;
+  int64 likes = 7;
+  int64 dislikes = 8;
+  int32 reaction = 9;
+}
+
+message CreateCommentRequest {
+  string session = 1;
+  int64 video_id = 2;
+  int64 reference_id = 3;
+  string content = 4;
+}
+
+message CreateCommentResponse {
+  int64 id = 1;
+}
+
+message ListCommentsRequest {
+  int64 video_id = 1;
+  int32 page = 2;
+  string session = 3;
+}
+
+message ListCommentsResponse {
+  repeated Comment comments = 1;
+}
+
+message ListRepliesRequest {
+  int64 comment_id = 1;
+  int32 page = 2;
+}
+
+message ListRepliesResponse {
+  repeated Comment replies = 1;
+}
+
+message DeleteCommentRequest {
+  int64 id = 1;
+  string session = 2;
+}
+
+message EditCommentRequest {
+  int64 id = 1;
+  string content = 2;
+  string session = 3;
+}

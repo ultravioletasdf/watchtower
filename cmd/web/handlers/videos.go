@@ -53,33 +53,42 @@ func extraUserInfo(c *fiber.Ctx) error {
 	return Render(c, frontend.ExtraUserInfo(user, getUser(c)))
 }
 
-func react(c *fiber.Ctx) error {
+func createComment(c *fiber.Ctx) error {
 	id := c.Params("id")
 	idInt, err := strconv.ParseInt(id, 10, 0)
 	if err != nil {
 		return c.SendStatus(400)
 	}
 
-	_type := c.Params("type")
-	typeInt, err := strconv.ParseInt(_type, 10, 0)
-	if err != nil {
-		return c.SendStatus(400)
+	comment := c.FormValue("comment")
+
+	referenceId := c.Query("reference_id")
+	var referenceIdInt int64
+	if referenceId != "" {
+		referenceIdInt, err = strconv.ParseInt(referenceId, 10, 0)
+		if err != nil {
+			return c.SendStatus(400)
+		}
 	}
 
-	if _, err := deps.Clients.Videos.React(c.Context(), &proto.ReactRequest{Session: c.Cookies("session"), VideoId: idInt, Type: int32(typeInt)}); err != nil {
+	cmnt, err := deps.Clients.Videos.CreateComment(c.Context(), &proto.CreateCommentRequest{Session: c.Cookies("session"), VideoId: idInt, Content: comment, ReferenceId: referenceIdInt})
+	if err != nil {
 		return c.Status(500).SendString(err.Error())
 	}
-	return c.SendStatus(200)
+	return Render(c, frontend.Comment(cmnt))
 }
-func deleteReaction(c *fiber.Ctx) error {
-	id := c.Params("id")
-	idInt, err := strconv.ParseInt(id, 10, 0)
+func listComments(c *fiber.Ctx) error {
+	videoId := c.Params("id")
+	videoIdInt, err := strconv.ParseInt(videoId, 10, 0)
 	if err != nil {
 		return c.SendStatus(400)
 	}
 
-	if _, err := deps.Clients.Videos.RemoveReaction(c.Context(), &proto.RemoveReactionRequest{Session: c.Cookies("session"), VideoId: idInt}); err != nil {
-		return c.Status(500).SendString(err.Error())
+	page := c.QueryInt("page", 0)
+
+	comments, err := deps.Clients.Videos.ListComments(c.Context(), &proto.ListCommentsRequest{VideoId: videoIdInt, Session: c.Cookies("session"), Page: int32(page)})
+	if err != nil {
+		return c.Status(500).SendString(status.Convert(err).Message())
 	}
-	return c.SendStatus(200)
+	return Render(c, frontend.CommentList(comments, videoIdInt, int32(page)))
 }

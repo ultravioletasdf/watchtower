@@ -41,6 +41,20 @@ func profile(c *fiber.Ctx) error {
 	}
 	return c.Redirect("/sign/in")
 }
+func profileFromId(c *fiber.Ctx) error {
+	userId := c.Params("id")
+	userIdInt, err := strconv.ParseInt(userId, 10, 0)
+	if err != nil {
+		return c.SendStatus(400)
+	}
+	user, err := deps.Clients.Users.GetById(c.Context(), &proto.UsersGetByIdRequest{Id: userIdInt, Session: c.Cookies("session")})
+	if errors.Is(err, common.ErrUserNotFound) {
+		return c.SendStatus(404)
+	} else if err != nil {
+		return c.Status(500).SendString(err.Error())
+	}
+	return c.Redirect(fmt.Sprintf("/user/%s", user.User.Username), fiber.StatusTemporaryRedirect)
+}
 func getStages(c *fiber.Ctx) error {
 	var ids []string
 	if err := c.BodyParser(&ids); err != nil {

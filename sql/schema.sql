@@ -50,8 +50,16 @@ CREATE TABLE follows (
 );
 
 CREATE TABLE reactions (
-    video_id bigint NOT NULL REFERENCES videos (id) ON DELETE CASCADE,
+    target_id bigint NOT NULL,
     user_id bigint NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     type int NOT NULL,
-    PRIMARY KEY (video_id, user_id)
+    PRIMARY KEY (target_id, user_id)
+);
+
+CREATE TABLE comments (
+    id bigint PRIMARY KEY,
+    video_id bigint NOT NULL REFERENCES videos(id) ON DELETE CASCADE,
+    user_id bigint NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    reference_id bigint REFERENCES comments(id) ON DELETE CASCADE,
+    content varchar(1000) NOT NULL
 );

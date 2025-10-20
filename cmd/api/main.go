@@ -87,8 +87,9 @@ func main() {
 	s := grpc.NewServer()
 	proto.RegisterUsersServer(s, &userServer{})
 	proto.RegisterSessionsServer(s, &sessionServer{})
-	proto.RegisterVideosServer(s, &videoService{})
+	proto.RegisterVideosServer(s, &videoServer{})
 	proto.RegisterThumbnailsServer(s, &thumbnailsServer{})
+	proto.RegisterReactionsServer(s, &reactionsServer{})
 	reflection.Register(s)
 
 	log.Printf("server listening at %v\n", lis.Addr())

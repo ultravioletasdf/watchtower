@@ -34,17 +34,17 @@ SELECT
     COALESCE(dislikes.count, 0) AS dislikes
 FROM videos v
 LEFT JOIN (
-    SELECT video_id, COUNT(*) AS count
+    SELECT target_id, COUNT(*) AS count
     FROM reactions
     WHERE type = 1
-    GROUP BY video_id
-) AS likes ON likes.video_id = v.id
+    GROUP BY target_id
+) AS likes ON likes.target_id = v.id
 LEFT JOIN (
-    SELECT video_id, COUNT(*) AS count
+    SELECT target_id, COUNT(*) AS count
     FROM reactions
     WHERE type = 2
-    GROUP BY video_id
-) AS dislikes ON dislikes.video_id = v.id
+    GROUP BY target_id
+) AS dislikes ON dislikes.target_id = v.id
 WHERE v.id = $1;
 
 -- name: GetVideoByUploadId :one
@@ -69,11 +69,10 @@ WHERE id = ANY(sqlc.arg(ids)::bigint[]);
 SELECT v.*
 FROM videos as v
 JOIN follows as f
-ON v.user_id = f.user_id
+    ON v.user_id = f.user_id
 WHERE f.follower_id = $1
-AND v.stage = 3
-AND visibility = 0
-
+    AND v.stage = 3
+    AND visibility = 0
 ORDER BY v.id DESC
 LIMIT 10
 OFFSET $2;

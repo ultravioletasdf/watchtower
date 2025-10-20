@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+package watchtower;
+
 option go_package = "videoapp/internal/proto";
 
 message AnalyseVideoMessage {

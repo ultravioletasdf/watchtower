@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package watchtower;
+
+import "messages.proto";
+
+option go_package = "videoapp/internal/proto";
+
+service Reactions {
+  rpc React(ReactRequest) returns (Empty);
+  rpc Remove(RemoveRequest) returns (Empty);
+}
+
+message ReactRequest {
+  string session = 1;
+  int64 video_id = 2;
+  int32 type = 3;
+}
+message RemoveRequest {
+  string session = 1;
+  int64 video_id = 2;
+}

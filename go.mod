@@ -27,6 +27,7 @@ require (
 )
 
 require (
+	github.com/Oudwins/tailwind-merge-go v0.2.1
 	github.com/andybalholm/brotli v1.1.0 // indirect
 	github.com/aws/aws-sdk-go v1.38.20 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect

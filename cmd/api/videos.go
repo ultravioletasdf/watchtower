@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/minio/minio-go/v7"
 	"github.com/rabbitmq/amqp091-go"
 	protobuf "google.golang.org/protobuf/proto"
@@ -19,11 +20,11 @@ import (
 	"videoapp/internal/utils"
 )
 
-type videoService struct {
+type videoServer struct {
 	proto.UnimplementedVideosServer
 }
 
-func (s *videoService) CreateUpload(ctx context.Context, req *proto.CreateUploadRequest) (*proto.CreateUploadResponse, error) {
+func (s *videoServer) CreateUpload(ctx context.Context, req *proto.CreateUploadRequest) (*proto.CreateUploadResponse, error) {
 	if len(req.Session) != SESSION_TOKEN_LENGTH {
 		return nil, common.ErrSessionWrongSize
 	}
@@ -54,7 +55,7 @@ func (s *videoService) CreateUpload(ctx context.Context, req *proto.CreateUpload
 	return &proto.CreateUploadResponse{Url: url.String(), Id: id.Int64(), FormData: fd}, nil
 }
 
-func (s *videoService) Create(ctx context.Context, req *proto.VideosCreateRequest) (*proto.VideosCreateResponse, error) {
+func (s *videoServer) Create(ctx context.Context, req *proto.VideosCreateRequest) (*proto.VideosCreateResponse, error) {
 	if len(req.Session) != SESSION_TOKEN_LENGTH {
 		return nil, common.ErrSessionWrongSize
 	}
@@ -101,7 +102,7 @@ func (s *videoService) Create(ctx context.Context, req *proto.VideosCreateReques
 	}
 	return &proto.VideosCreateResponse{Id: id.Int64()}, nil
 }
-func (s *videoService) GetUserVideos(ctx context.Context, req *proto.GetUserVideosRequest) (*proto.GetUserVideosResponse, error) {
+func (s *videoServer) GetUserVideos(ctx context.Context, req *proto.GetUserVideosRequest) (*proto.GetUserVideosResponse, error) {
 	var showPrivate bool
 	if req.Session != "" {
 		_, err := executor.GetUserFromSession(ctx, req.Session)
@@ -126,7 +127,7 @@ func (s *videoService) GetUserVideos(ctx context.Context, req *proto.GetUserVide
 	return &proto.GetUserVideosResponse{Videos: videos}, nil
 }
 
-func (s *videoService) Get(ctx context.Context, req *proto.GetVideoRequest) (*proto.GetVideoResponse, error) {
+func (s *videoServer) Get(ctx context.Context, req *proto.GetVideoRequest) (*proto.GetVideoResponse, error) {
 	v, err := executor.GetVideo(ctx, req.Id)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, common.ErrVideoNotFound
@@ -150,7 +151,7 @@ func (s *videoService) Get(ctx context.Context, req *proto.GetVideoRequest) (*pr
 
 	var userReaction int32
 	if req.Session != "" {
-		reaction, err := executor.GetReaction(ctx, sqlc.GetReactionParams{VideoID: req.Id, Token: req.Session})
+		reaction, err := executor.GetReaction(ctx, sqlc.GetReactionParams{TargetID: req.Id, Token: req.Session})
 		if !errors.Is(err, sql.ErrNoRows) && err != nil {
 			return nil, common.ErrInternal(err)
 		}
@@ -164,7 +165,7 @@ func (s *videoService) Get(ctx context.Context, req *proto.GetVideoRequest) (*pr
 
 	return &proto.GetVideoResponse{Id: v.ID, Title: v.Title, Visibility: proto.Visibility(v.Visibility), CreatedAt: v.CreatedAt.Time.Unix(), ThumbnailId: v.ThumbnailID, UploadId: v.UploadID, UserId: v.UserID, Stage: proto.Stage(v.Stage), AuthorizationPayload: payload, AuthorizationSignature: sig, Likes: v.Likes, Dislikes: v.Dislikes, UserReaction: userReaction}, nil
 }
-func (s *videoService) Delete(ctx context.Context, req *proto.DeleteVideoRequest) (*proto.DeleteVideoResponse, error) {
+func (s *videoServer) Delete(ctx context.Context, req *proto.DeleteVideoRequest) (*proto.DeleteVideoResponse, error) {
 	if len(req.Session) != SESSION_TOKEN_LENGTH {
 
 		return nil, common.ErrSessionWrongSize
@@ -193,7 +194,7 @@ func (s *videoService) Delete(ctx context.Context, req *proto.DeleteVideoRequest
 	}
 	return &proto.DeleteVideoResponse{}, nil
 }
-func (s *videoService) GetStage(ctx context.Context, req *proto.VideosGetStageRequest) (*proto.VideosGetStageResponse, error) {
+func (s *videoServer) GetStage(ctx context.Context, req *proto.VideosGetStageRequest) (*proto.VideosGetStageResponse, error) {
 	stage, err := executor.GetStage(ctx, req.Id)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, common.ErrVideoNotFound
@@ -211,16 +212,49 @@ func (s *videoService) GetStage(ctx context.Context, req *proto.VideosGetStageRe
 	}
 	return &proto.VideosGetStageResponse{Stage: proto.Stage(stage.Stage), UploadId: stage.UploadID, AuthorizationPayload: pl, AuthorizationSignature: sg}, nil
 }
-func (s *videoService) GetStages(ctx context.Context, req *proto.VideosGetStagesRequest) (*proto.VideosGetStagesResponse, error) {
+func (s *videoServer) GetStages(ctx context.Context, req *proto.VideosGetStagesRequest) (*proto.VideosGetStagesResponse, error) {
 	json, err := executor.GetStages(ctx, req.Ids)
 	if err != nil {
 		return nil, common.ErrInternal(err)
 	}
 	return &proto.VideosGetStagesResponse{Result: string(json)}, nil
 }
-func (s *videoService) React(ctx context.Context, req *proto.ReactRequest) (*proto.Empty, error) {
-	return nil, common.ErrInternal(executor.React(ctx, sqlc.ReactParams{VideoID: req.VideoId, Type: req.Type, Token: req.Session}))
+func (s *videoServer) CreateComment(ctx context.Context, req *proto.CreateCommentRequest) (*proto.Comment, error) {
+	if !utils.Between(len(req.Content), 3, 1000) {
+		return nil, common.ErrInvalidComment
+	}
+
+	user, err := executor.GetUserFromSession(ctx, req.Session)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, common.ErrUnauthorized
+	} else if err != nil {
+		return nil, common.ErrInternal(err)
+	}
+
+	id := snowflakeNode.Generate().Int64()
+
+	err = executor.CreateComment(ctx, sqlc.CreateCommentParams{ID: id, VideoID: req.VideoId, ReferenceID: pgtype.Int8{Int64: req.ReferenceId, Valid: req.ReferenceId != 0}, Content: req.Content, UserID: user.ID})
+	return &proto.Comment{Id: id, UserId: user.ID, VideoId: req.VideoId, ReferenceId: req.ReferenceId, Content: req.Content, Username: user.Username}, common.ErrInternal(err)
 }
-func (s *videoService) RemoveReaction(ctx context.Context, req *proto.RemoveReactionRequest) (*proto.Empty, error) {
-	return nil, common.ErrInternal(executor.RemoveReaction(ctx, sqlc.RemoveReactionParams{VideoID: req.VideoId, Token: req.Session}))
+func (s *videoServer) ListComments(ctx context.Context, req *proto.ListCommentsRequest) (*proto.ListCommentsResponse, error) {
+	var userId int64
+	// Get the users id if a session is provided, so we can get the users reaction
+	if req.Session != "" {
+		u, err := executor.GetUserFromSession(ctx, req.Session)
+		if err == nil {
+			userId = u.ID
+		} else if !errors.Is(err, sql.ErrNoRows) { // Continue even if we couldn't get the users ID
+			fmt.Printf("Couldn't get users session: %v\n", err)
+		}
+	}
+
+	comments, err := executor.ListComments(ctx, sqlc.ListCommentsParams{VideoID: req.VideoId, Offset: req.Page * 10, UserID: userId})
+	if err != nil {
+		return nil, common.ErrInternal(err)
+	}
+	cs := make([]*proto.Comment, len(comments))
+	for i, c := range comments {
+		cs[i] = &proto.Comment{Id: c.ID, UserId: c.UserID, Content: c.Content, Username: c.Username.String, Likes: c.Likes, Dislikes: c.Dislikes, Reaction: c.Type.Int32}
+	}
+	return &proto.ListCommentsResponse{Comments: cs}, nil
 }
