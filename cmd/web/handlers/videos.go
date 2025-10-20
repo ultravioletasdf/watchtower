@@ -71,11 +71,15 @@ func createComment(c *fiber.Ctx) error {
 		}
 	}
 
+	if referenceIdInt != 0 {
+		// When there is a ReferenceId, tell HTMX to add the comment to its replies instead of the main video comments
+		c.Set("HX-Retarget", "#replies_"+referenceId)
+	}
 	cmnt, err := deps.Clients.Videos.CreateComment(c.Context(), &proto.CreateCommentRequest{Session: c.Cookies("session"), VideoId: idInt, Content: comment, ReferenceId: referenceIdInt})
 	if err != nil {
 		return c.Status(500).SendString(err.Error())
 	}
-	return Render(c, frontend.Comment(cmnt))
+	return Render(c, frontend.Comment(cmnt, cmnt.UserId))
 }
 func listComments(c *fiber.Ctx) error {
 	videoId := c.Params("id")
@@ -85,10 +89,15 @@ func listComments(c *fiber.Ctx) error {
 	}
 
 	page := c.QueryInt("page", 0)
+	referenceId := c.QueryInt("reference_id", 0)
 
-	comments, err := deps.Clients.Videos.ListComments(c.Context(), &proto.ListCommentsRequest{VideoId: videoIdInt, Session: c.Cookies("session"), Page: int32(page)})
+	comments, err := deps.Clients.Videos.ListComments(c.Context(), &proto.ListCommentsRequest{VideoId: videoIdInt, Session: c.Cookies("session"), Page: int32(page), ReferenceId: int64(referenceId)})
 	if err != nil {
 		return c.Status(500).SendString(status.Convert(err).Message())
 	}
-	return Render(c, frontend.CommentList(comments, videoIdInt, int32(page)))
+	var uid int64
+	if u := getUser(c); u != nil {
+		uid = u.Id
+	}
+	return Render(c, frontend.CommentList(comments, videoIdInt, int32(page), uid))
 }

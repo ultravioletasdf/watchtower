@@ -2,10 +2,10 @@ syntax = "proto3";
 
 package watchtower;
 
-option go_package = "videoapp/internal/proto";
-
-import "messages.proto";
 import "comments.proto";
+import "messages.proto";
+
+option go_package = "videoapp/internal/proto";
 
 service Videos {
   rpc CreateUpload(CreateUploadRequest) returns (CreateUploadResponse);
@@ -17,10 +17,8 @@ service Videos {
   rpc GetStages(VideosGetStagesRequest) returns (VideosGetStagesResponse);
   rpc Delete(DeleteVideoRequest) returns (DeleteVideoResponse);
 
-
   rpc CreateComment(CreateCommentRequest) returns (Comment);
   rpc ListComments(ListCommentsRequest) returns (ListCommentsResponse);
-  rpc ListReplies(ListRepliesRequest) returns (ListRepliesResponse);
   rpc DeleteComment(DeleteCommentRequest) returns (Empty);
   rpc EditComment(EditCommentRequest) returns (Empty);
 }

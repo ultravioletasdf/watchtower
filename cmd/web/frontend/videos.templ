@@ -72,7 +72,11 @@ templ ViewVideo(user *proto.User, video *proto.GetVideoResponse) {
 					<button
 						class="btn btn-sm join-item rounded-l-full"
 						:class="reaction == 1 && 'btn-primary'"
-						@click={ fmt.Sprintf(likeScript, video.Id, video.Id) }
+						if user == nil {
+							@click="$store.showSignInModal = true"
+						} else {
+							@click={ fmt.Sprintf(likeScript, video.Id, video.Id) }
+						}
 					>
 						@icons.ThumbsUp(iconSize)
 						<div x-text="likeCount"></div>
@@ -80,7 +84,11 @@ templ ViewVideo(user *proto.User, video *proto.GetVideoResponse) {
 					<button
 						class="btn btn-sm join-item rounded-r-full"
 						:class="reaction == 2 && 'btn-primary'"
-						@click={ fmt.Sprintf(dislikeScript, video.Id, video.Id) }
+						if user == nil {
+							@click="$store.showSignInModal = true"
+						} else {
+							@click={ fmt.Sprintf(dislikeScript, video.Id, video.Id) }
+						}
 					>
 						@icons.ThumbsDown(iconSize)
 						<div x-text="dislikeCount"></div>
@@ -92,7 +100,9 @@ templ ViewVideo(user *proto.User, video *proto.GetVideoResponse) {
 			<span class="text-lg font-semibold">100 Comments</span>
 			@CommentSortSwitcher()
 		</div>
-		@CommentBox(user, video)
+		if user != nil {
+			@CommentBox(user.Id, video.Id, 0, "Comment", false)
+		}
 		@Comments(video.Id)
 	}
 }

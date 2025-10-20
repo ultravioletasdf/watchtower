@@ -8,25 +8,38 @@ import (
 )
 
 // Box for commenting on a video
-templ CommentBox(user *proto.User, video *proto.GetVideoResponse) {
-	if user != nil {
+templ CommentBox(userId, videoId, referenceId int64, buttonTitle string, small bool) {
+	if userId != 0 {
 		<!-- Form creates a comment and adds to the start of the list of comments -->
 		<form
 			id="comment_form"
-			hx-post={ fmt.Sprintf("/videos/%d/comments", video.Id) }
+			hx-post={ fmt.Sprintf("/videos/%d/comments?reference_id=%d", videoId, referenceId) }
 			hx-target="#comments"
 			hx-swap="afterbegin"
 			class="flex lg:w-3/4 gap-4 mt-4 items-start"
 			x-data="{ comment: '' }"
-			@htmx:after-request="comment = ''"
+			@htmx:after-request="comment = ''; replying = false; show_replies = true"
+			@keyup.escape="comment = ''; replying = false;"
 		>
-			@Avatar(user.Id, "size-10")
+			{{
+				avatarSize := "size-10"
+				textareaClass := "w-full resize-none textarea min-h-0"
+				btnClass := "btn btn-primary"
+				charCountClass := "text-sm opacity-80"
+				if small {
+					avatarSize = "size-8"
+					textareaClass += " text-xs"
+					btnClass += " btn-sm"
+					charCountClass += " text-xs"
+				}
+			}}
+			@Avatar(userId, avatarSize)
 			<!-- The @input attribute resize the textarea to fit the content -->
 			<textarea
 				x-data
 				maxlength="1000"
 				rows="1"
-				class="w-full resize-none textarea min-h-0"
+				class={ textareaClass }
 				placeholder="Add a comment"
 				name="comment"
 				@input='$el.style.height = "";$el.style.height = $el.scrollHeight + "px"'
@@ -35,9 +48,11 @@ templ CommentBox(user *proto.User, video *proto.GetVideoResponse) {
 			></textarea>
 			<div class="flex flex-col items-center gap-1">
 				<!-- Comment Button -->
-				<button class="btn btn-primary" disabled="true" :disabled="comment.length === 0">Comment</button>
+				<button class={ btnClass } disabled="true" :disabled="comment.length === 0">
+					{ buttonTitle }
+				</button>
 				<!-- Character Count -->
-				<div class="text-sm opacity-80">
+				<div class={ charCountClass }>
 					<span x-text="comment.length"></span>/1000
 				</div>
 			</div>
@@ -52,19 +67,25 @@ templ Comments(videoId int64) {
 		id="comments"
 		class="flex flex-col gap-2"
 		hx-trigger="load"
-		hx-get={ fmt.Sprintf("/videos/%d/comments?page=0",
-  videoId) }
+		hx-get={ fmt.Sprintf("/videos/%d/comments?page=0", videoId) }
 		hx-target="this"
 		hx-swap="afterbegin"
 	></div>
 }
 
-templ Comment(c *proto.Comment) {
-	<div class="flex gap-2">
-		@UserLink(c.Username) {
-			@Avatar(c.UserId, "size-10")
+templ Comment(c *proto.Comment, userId int64) {
+	{{
+		avatarClass := "size-10"
+		// If its a reply, make avatar and buttons smaller
+		if c.ReferenceId != 0 {
+			avatarClass = "size-8"
 		}
-		<div class="flex flex-col">
+	}}
+	<div class="flex gap-2 w-full">
+		@UserLink(c.Username) {
+			@Avatar(c.UserId, avatarClass)
+		}
+		<div class="flex flex-col w-full" x-data="{ replying: false, show_replies: false }">
 			<!-- Username and time -->
 			<span class="flex gap-1 text-sm">
 				@UserLink(c.Username) {
@@ -76,15 +97,17 @@ templ Comment(c *proto.Comment) {
 			<!-- Interaction row -->
 			<div
 				class="flex text-sm mt-2 gap-1"
-				x-data={ fmt.Sprintf("{ reaction: %d, likeCount: %d, dislikeCount: %d }",
-      c.Reaction, c.Likes, c.Dislikes) }
+				x-data={ fmt.Sprintf("{ reaction: %d, likeCount: %d, dislikeCount: %d }", c.Reaction, c.Likes, c.Dislikes) }
 			>
 				<!-- Like -->
 				<button
 					class="btn btn-sm rounded-full"
 					:class="reaction == 1 && 'btn-primary'"
-					@click={ fmt.Sprintf(likeScript,
-        c.Id, c.Id) }
+					if userId == 0 {
+						@click="$store.showSignInModal = true"
+					} else {
+						@click={ fmt.Sprintf(likeScript, c.Id, c.Id) }
+					}
 				>
 					@icons.ThumbsUp(iconSize)
 					<div x-text="likeCount"></div>
@@ -93,31 +116,62 @@ templ Comment(c *proto.Comment) {
 				<button
 					class="btn btn-sm rounded-full"
 					:class="reaction == 2 && 'btn-primary'"
-					@click={ fmt.Sprintf(dislikeScript, c.Id, c.Id) }
+					if userId == 0 {
+						@click="$store.showSignInModal = true"
+					} else {
+						@click={ fmt.Sprintf(dislikeScript, c.Id, c.Id) }
+					}
 				>
 					@icons.ThumbsDown(iconSize)
 					<div x-text="dislikeCount"></div>
 				</button>
-				<!-- Reply -->
-				<div class="btn btn-sm rounded-full">
-					@icons.Reply(iconSize)
-					Reply
-				</div>
-				<!-- View Replies -->
-				<span class="btn btn-sm rounded-full w-fit btn-info">
-					@icons.ChevronDown(icons.IconProps{Class: "size-4"})
-					1 Reply
-				</span>
+				if c.ReferenceId == 0 {
+					<!-- Reply -->
+					<button
+						if userId == 0 {
+							@click="$store.showSignInModal = true"
+						} else {
+							@click="replying = true"
+						}
+						class="btn btn-sm rounded-full"
+					>
+						@icons.Reply(iconSize)
+						Reply
+					</button>
+					<!-- 
+            View Replies
+            Loads replies on first hover
+            Toggles replies on each click
+          -->
+					<button
+						class="btn btn-sm rounded-full w-fit btn-info"
+						hx-get={ fmt.Sprintf("/videos/%d/comments?reference_id=%d", c.VideoId, c.Id) }
+						hx-target={ fmt.Sprintf("#replies_%d", c.Id) }
+						hx-swap="afterbegin"
+						hx-trigger="clickonce"
+						@mouseover.once="htmx.trigger($el, 'clickonce')"
+						@click="show_replies = !show_replies"
+					>
+						@icons.ChevronDown(icons.IconProps{Class: "size-4 rotate-0 transition", Attributes: templ.Attributes{":class": "show_replies && 'rotate-180'"}})
+						1 Reply
+					</button>
+				}
 			</div>
+			<!-- Shows when the user hits reply -->
+			<div x-show="replying" class="w-full flex flex-col">
+				@CommentBox(userId, c.VideoId, c.Id, "Reply", true)
+			</div>
+			<!-- Comment replies -->
+			<div id={ fmt.Sprintf("replies_%d", c.Id) } class="flex flex-col gap-2 mt-2 empty:hidden" x-show="show_replies"></div>
 		</div>
 	</div>
 }
 
 // Renders a list of comments
-templ CommentList(response *proto.ListCommentsResponse, videoId int64, page int32) {
+templ CommentList(response *proto.ListCommentsResponse, videoId int64, page int32, userId int64) {
 	for i, comment := range response.Comments {
 		<!-- Render the comment -->
-		@Comment(comment)
+		@Comment(comment, userId)
 		<!-- On the last comment, load more comments -->
 		if i == len(response.Comments)-1 {
 			<div

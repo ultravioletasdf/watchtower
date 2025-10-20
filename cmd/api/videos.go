@@ -248,13 +248,18 @@ func (s *videoServer) ListComments(ctx context.Context, req *proto.ListCommentsR
 		}
 	}
 
-	comments, err := executor.ListComments(ctx, sqlc.ListCommentsParams{VideoID: req.VideoId, Offset: req.Page * 10, UserID: userId})
+	var ref pgtype.Int8
+	if req.ReferenceId != 0 {
+		ref.Int64 = req.ReferenceId
+		ref.Valid = true
+	}
+	comments, err := executor.ListComments(ctx, sqlc.ListCommentsParams{VideoID: req.VideoId, Offset: req.Page * 10, UserID: userId, ReferenceID: ref})
 	if err != nil {
 		return nil, common.ErrInternal(err)
 	}
 	cs := make([]*proto.Comment, len(comments))
 	for i, c := range comments {
-		cs[i] = &proto.Comment{Id: c.ID, UserId: c.UserID, Content: c.Content, Username: c.Username.String, Likes: c.Likes, Dislikes: c.Dislikes, Reaction: c.Type.Int32}
+		cs[i] = &proto.Comment{Id: c.ID, UserId: c.UserID, Content: c.Content, Username: c.Username.String, Likes: c.Likes, Dislikes: c.Dislikes, Reaction: c.Type.Int32, VideoId: c.VideoID, ReferenceId: c.ReferenceID.Int64}
 	}
 	return &proto.ListCommentsResponse{Comments: cs}, nil
 }

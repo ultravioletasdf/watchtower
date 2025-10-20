@@ -31,19 +31,11 @@ message ListCommentsRequest {
   int64 video_id = 1;
   int32 page = 2;
   string session = 3;
+  int64 reference_id = 4;
 }
 
 message ListCommentsResponse {
   repeated Comment comments = 1;
-}
-
-message ListRepliesRequest {
-  int64 comment_id = 1;
-  int32 page = 2;
-}
-
-message ListRepliesResponse {
-  repeated Comment replies = 1;
 }
 
 message DeleteCommentRequest {

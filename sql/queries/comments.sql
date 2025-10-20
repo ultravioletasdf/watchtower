@@ -20,7 +20,7 @@ FROM
   AND r.user_id = $1
 WHERE
   c.video_id = $2
-  AND c.reference_id IS NULL
+  AND c.reference_id IS NOT DISTINCT FROM @reference_id -- filters out replies when @reference_id is set, list replies when it is
 GROUP BY
   c.id,
   u.username,
