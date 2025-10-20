@@ -12,11 +12,13 @@ templ CommentBox(user *proto.User, video *proto.GetVideoResponse) {
 	if user != nil {
 		<!-- Form creates a comment and adds to the start of the list of comments -->
 		<form
+			id="comment_form"
 			hx-post={ fmt.Sprintf("/videos/%d/comments", video.Id) }
 			hx-target="#comments"
 			hx-swap="afterbegin"
 			class="flex lg:w-3/4 gap-4 mt-4 items-start"
 			x-data="{ comment: '' }"
+			@htmx:after-request="comment = ''"
 		>
 			@Avatar(user.Id, "size-10")
 			<!-- The @input attribute resize the textarea to fit the content -->
@@ -28,6 +30,7 @@ templ CommentBox(user *proto.User, video *proto.GetVideoResponse) {
 				placeholder="Add a comment"
 				name="comment"
 				@input='$el.style.height = "";$el.style.height = $el.scrollHeight + "px"'
+				@keyup.ctrl.enter="htmx.trigger('#comment_form', 'submit')"
 				x-model="comment"
 			></textarea>
 			<div class="flex flex-col items-center gap-1">
