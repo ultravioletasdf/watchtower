@@ -12,13 +12,13 @@ templ CommentBox(userId, videoId, referenceId int64, buttonTitle string, small b
 	if userId != 0 {
 		<!-- Form creates a comment and adds to the start of the list of comments -->
 		<form
-			id="comment_form"
+			id={ fmt.Sprintf("comment_form_%d", referenceId) }
 			hx-post={ fmt.Sprintf("/videos/%d/comments?reference_id=%d", videoId, referenceId) }
 			hx-target="#comments"
 			hx-swap="afterbegin"
 			class="flex lg:w-3/4 gap-4 mt-4 items-start"
 			x-data="{ comment: '' }"
-			@htmx:after-request="comment = ''; replying = false; show_replies = true"
+			@htmx:after-request="console.log(typeof replying); if (typeof replying !== 'undefined') {console.log(reply_count);reply_count++; replying = false;} else {comment_count++}; comment = ''; if (typeof show_replies !== 'undefined') show_replies = true;"
 			@keyup.escape="comment = ''; replying = false;"
 		>
 			{{
@@ -43,12 +43,12 @@ templ CommentBox(userId, videoId, referenceId int64, buttonTitle string, small b
 				placeholder="Add a comment"
 				name="comment"
 				@input='$el.style.height = "";$el.style.height = $el.scrollHeight + "px"'
-				@keyup.ctrl.enter="htmx.trigger('#comment_form', 'submit')"
+				@keyup.ctrl.enter={ fmt.Sprintf("if (comment.length >= 3 && comment.length <= 1000) htmx.trigger('#comment_form_%d', 'submit')", referenceId) }
 				x-model="comment"
 			></textarea>
 			<div class="flex flex-col items-center gap-1">
 				<!-- Comment Button -->
-				<button class={ btnClass } disabled="true" :disabled="comment.length === 0">
+				<button class={ btnClass } disabled="true" :disabled="comment.length < 3 || comment.length > 1000">
 					{ buttonTitle }
 				</button>
 				<!-- Character Count -->
@@ -85,7 +85,7 @@ templ Comment(c *proto.Comment, userId int64) {
 		@UserLink(c.Username) {
 			@Avatar(c.UserId, avatarClass)
 		}
-		<div class="flex flex-col w-full" x-data="{ replying: false, show_replies: false }">
+		<div class="flex flex-col w-full" x-data={ fmt.Sprintf("{ replying: false, show_replies: false, reply_count: %d }", c.Replies) }>
 			<!-- Username and time -->
 			<span class="flex gap-1 text-sm">
 				@UserLink(c.Username) {
@@ -139,7 +139,7 @@ templ Comment(c *proto.Comment, userId int64) {
 						Reply
 					</button>
 					<!-- 
-            View Replies
+            View Replies (shows only when there are actually replies)
             Loads replies on first hover
             Toggles replies on each click
           -->
@@ -151,9 +151,10 @@ templ Comment(c *proto.Comment, userId int64) {
 						hx-trigger="clickonce"
 						@mouseover.once="htmx.trigger($el, 'clickonce')"
 						@click="show_replies = !show_replies"
+						x-show="reply_count > 0"
 					>
 						@icons.ChevronDown(icons.IconProps{Class: "size-4 rotate-0 transition", Attributes: templ.Attributes{":class": "show_replies && 'rotate-180'"}})
-						1 Reply
+						<span x-text="reply_count"></span> Reply
 					</button>
 				}
 			</div>

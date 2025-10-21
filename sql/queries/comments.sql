@@ -5,26 +5,30 @@ SELECT
   u.username,
   count(l) AS likes,
   count(dl) AS dislikes,
-  r.type
+  r.type,
+  COALESCE(replies.count, 0) AS replies
 FROM
   comments c
   LEFT JOIN users u ON u.id = c.user_id
   -- like count
-  LEFT JOIN reactions l ON c.id = l.target_id
-  AND l.type = 1
+  LEFT JOIN reactions l ON c.id = l.target_id AND l.type = 1
   -- dislike count
-  LEFT JOIN reactions dl ON c.id = dl.target_id
-  AND dl.type = 2
+  LEFT JOIN reactions dl ON c.id = dl.target_id AND dl.type = 2
   -- type of reaction for the user
-  LEFT JOIN reactions r ON c.id = r.target_id
-  AND r.user_id = $1
+  LEFT JOIN reactions r ON c.id = r.target_id AND r.user_id = $1
+  -- reply count
+  LEFT JOIN LATERAL (
+    SELECT COUNT(*) FROM comments
+    WHERE reference_id = c.id
+  ) AS replies ON c.reference_id IS NULL
 WHERE
   c.video_id = $2
   AND c.reference_id IS NOT DISTINCT FROM @reference_id -- filters out replies when @reference_id is set, list replies when it is
 GROUP BY
   c.id,
   u.username,
-  r.type
+  r.type,
+  replies.count
 ORDER BY
   c.id DESC
 LIMIT

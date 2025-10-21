@@ -43,67 +43,69 @@ templ ViewVideo(user *proto.User, video *proto.GetVideoResponse) {
 	<link rel="stylesheet" href="https://cdn.vidstack.io/player/video.css"/>
 	<script src="https://cdn.vidstack.io/player" type="module"></script>
 	@AppLayout(user) {
-		@VideoStatusPoller(video)
-		<div class="flex justify-between pt-2 lg:w-3/4">
-			<div class="flex flex-col">
-				<span class="text-xl font-bold">{ video.Title }</span>
-				// { formatDate(video.CreatedAt) }
-				<div class="flex flex-row gap-2 items-center">
-					@UserLinkId(video.UserId) {
-						@Avatar(video.UserId, "size-12")
-					}
-					// Load extra user information
-					<div
-						class="flex flex-row gap-4 items-center"
-						id="extrauserinfo"
-						hx-get={ fmt.Sprintf("/user/%d/extrainfo",
+		<div x-data={ fmt.Sprintf("{ comment_count: %d }", video.Comments) }>
+			@VideoStatusPoller(video)
+			<div class="flex justify-between pt-2 lg:w-3/4">
+				<div class="flex flex-col">
+					<span class="text-xl font-bold">{ video.Title }</span>
+					// { formatDate(video.CreatedAt) }
+					<div class="flex flex-row gap-2 items-center">
+						@UserLinkId(video.UserId) {
+							@Avatar(video.UserId, "size-12")
+						}
+						// Load extra user information
+						<div
+							class="flex flex-row gap-4 items-center"
+							id="extrauserinfo"
+							hx-get={ fmt.Sprintf("/user/%d/extrainfo",
         video.UserId) }
-						hx-trigger="load"
-						hx-target="#extrauserinfo"
-					></div>
+							hx-trigger="load"
+							hx-target="#extrauserinfo"
+						></div>
+					</div>
 				</div>
-			</div>
-			<div>
-				<div
-					class="join"
-					x-data={ fmt.Sprintf("{ reaction: %d, likeCount: %d, dislikeCount: %d }", video.UserReaction,
+				<div>
+					<div
+						class="join"
+						x-data={ fmt.Sprintf("{ reaction: %d, likeCount: %d, dislikeCount: %d }", video.UserReaction,
       video.Likes, video.Dislikes) }
-				>
-					<button
-						class="btn btn-sm join-item rounded-l-full"
-						:class="reaction == 1 && 'btn-primary'"
-						if user == nil {
-							@click="$store.showSignInModal = true"
-						} else {
-							@click={ fmt.Sprintf(likeScript, video.Id, video.Id) }
-						}
 					>
-						@icons.ThumbsUp(iconSize)
-						<div x-text="likeCount"></div>
-					</button>
-					<button
-						class="btn btn-sm join-item rounded-r-full"
-						:class="reaction == 2 && 'btn-primary'"
-						if user == nil {
-							@click="$store.showSignInModal = true"
-						} else {
-							@click={ fmt.Sprintf(dislikeScript, video.Id, video.Id) }
-						}
-					>
-						@icons.ThumbsDown(iconSize)
-						<div x-text="dislikeCount"></div>
-					</button>
+						<button
+							class="btn btn-sm join-item rounded-l-full"
+							:class="reaction == 1 && 'btn-primary'"
+							if user == nil {
+								@click="$store.showSignInModal = true"
+							} else {
+								@click={ fmt.Sprintf(likeScript, video.Id, video.Id) }
+							}
+						>
+							@icons.ThumbsUp(iconSize)
+							<div x-text="likeCount"></div>
+						</button>
+						<button
+							class="btn btn-sm join-item rounded-r-full"
+							:class="reaction == 2 && 'btn-primary'"
+							if user == nil {
+								@click="$store.showSignInModal = true"
+							} else {
+								@click={ fmt.Sprintf(dislikeScript, video.Id, video.Id) }
+							}
+						>
+							@icons.ThumbsDown(iconSize)
+							<div x-text="dislikeCount"></div>
+						</button>
+					</div>
 				</div>
 			</div>
+			<div class="mt-8 flex gap-1 lg:w-3/4 items-center">
+				<span class="text-lg font-semibold"><span x-text="comment_count"></span> Comments</span>
+				@CommentSortSwitcher()
+			</div>
+			if user != nil {
+				@CommentBox(user.Id, video.Id, 0, "Comment", false)
+			}
+			@Comments(video.Id)
 		</div>
-		<div class="mt-8 flex gap-1 lg:w-3/4 items-center">
-			<span class="text-lg font-semibold">100 Comments</span>
-			@CommentSortSwitcher()
-		</div>
-		if user != nil {
-			@CommentBox(user.Id, video.Id, 0, "Comment", false)
-		}
-		@Comments(video.Id)
 	}
 }
 

@@ -31,7 +31,8 @@ ORDER BY created_at DESC;
 SELECT
     v.*,
     COALESCE(likes.count, 0) AS likes,
-    COALESCE(dislikes.count, 0) AS dislikes
+    COALESCE(dislikes.count, 0) AS dislikes,
+    COALESCE(comments.count, 0) AS comments
 FROM videos v
 LEFT JOIN (
     SELECT target_id, COUNT(*) AS count
@@ -45,6 +46,11 @@ LEFT JOIN (
     WHERE type = 2
     GROUP BY target_id
 ) AS dislikes ON dislikes.target_id = v.id
+LEFT JOIN LATERAL (
+  SELECT COUNT(*) AS count
+  FROM comments c
+  WHERE c.video_id = $1 AND c.reference_id IS NULL
+) AS comments ON true
 WHERE v.id = $1;
 
 -- name: GetVideoByUploadId :one

@@ -14,6 +14,7 @@ message Comment {
   int64 likes = 7;
   int64 dislikes = 8;
   int32 reaction = 9;
+  int64 replies = 10;
 }
 
 message CreateCommentRequest {

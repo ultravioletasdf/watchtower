@@ -112,6 +112,7 @@ message GetVideoResponse {
   int64 likes = 11;
   int64 dislikes = 12;
   int32 user_reaction = 13;
+  int64 comments = 14;
 }
 enum Visibility {
   Public = 0;

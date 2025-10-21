@@ -163,7 +163,7 @@ func (s *videoServer) Get(ctx context.Context, req *proto.GetVideoRequest) (*pro
 		return nil, err
 	}
 
-	return &proto.GetVideoResponse{Id: v.ID, Title: v.Title, Visibility: proto.Visibility(v.Visibility), CreatedAt: v.CreatedAt.Time.Unix(), ThumbnailId: v.ThumbnailID, UploadId: v.UploadID, UserId: v.UserID, Stage: proto.Stage(v.Stage), AuthorizationPayload: payload, AuthorizationSignature: sig, Likes: v.Likes, Dislikes: v.Dislikes, UserReaction: userReaction}, nil
+	return &proto.GetVideoResponse{Id: v.ID, Title: v.Title, Visibility: proto.Visibility(v.Visibility), CreatedAt: v.CreatedAt.Time.Unix(), ThumbnailId: v.ThumbnailID, UploadId: v.UploadID, UserId: v.UserID, Stage: proto.Stage(v.Stage), AuthorizationPayload: payload, AuthorizationSignature: sig, Likes: v.Likes, Dislikes: v.Dislikes, UserReaction: userReaction, Comments: v.Comments}, nil
 }
 func (s *videoServer) Delete(ctx context.Context, req *proto.DeleteVideoRequest) (*proto.DeleteVideoResponse, error) {
 	if len(req.Session) != SESSION_TOKEN_LENGTH {
@@ -259,7 +259,7 @@ func (s *videoServer) ListComments(ctx context.Context, req *proto.ListCommentsR
 	}
 	cs := make([]*proto.Comment, len(comments))
 	for i, c := range comments {
-		cs[i] = &proto.Comment{Id: c.ID, UserId: c.UserID, Content: c.Content, Username: c.Username.String, Likes: c.Likes, Dislikes: c.Dislikes, Reaction: c.Type.Int32, VideoId: c.VideoID, ReferenceId: c.ReferenceID.Int64}
+		cs[i] = &proto.Comment{Id: c.ID, UserId: c.UserID, Content: c.Content, Username: c.Username.String, Likes: c.Likes, Dislikes: c.Dislikes, Reaction: c.Type.Int32, VideoId: c.VideoID, ReferenceId: c.ReferenceID.Int64, Replies: c.Replies}
 	}
 	return &proto.ListCommentsResponse{Comments: cs}, nil
 }
