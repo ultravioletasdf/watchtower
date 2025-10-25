@@ -169,7 +169,7 @@ templ Comment(c *proto.Comment, userId int64) {
 }
 
 // Renders a list of comments
-templ CommentList(response *proto.ListCommentsResponse, videoId int64, page int32, userId int64) {
+templ CommentList(response *proto.ListCommentsResponse, videoId int64, page int32, userId int64, sortOrder int32) {
 	for i, comment := range response.Comments {
 		<!-- Render the comment -->
 		@Comment(comment, userId)
@@ -179,7 +179,7 @@ templ CommentList(response *proto.ListCommentsResponse, videoId int64, page int3
 				hx-trigger="intersect once"
 				hx-swap="beforeend"
 				hx-target="#comments"
-				hx-get={ fmt.Sprintf("/videos/%d/comments?page=%d", videoId, page+1) }
+				hx-get={ fmt.Sprintf("/videos/%d/comments?page=%d&sort_order=%d", videoId, page+1, sortOrder) }
 			></div>
 		}
 	}

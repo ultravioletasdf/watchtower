@@ -6,7 +6,7 @@ pre_cmd = [
 ]
 cmd = "cd cmd/web && go build -o ../../tmp/web ."
 bin = "tmp/web"
-exclude_dir = ["assets", "tmp", "testdata", "node_modules", "migrations"]
+exclude_dir = ["assets", "tmp", "testdata", "cmd/web/node_modules", "migrations"]
 exclude_file = []
 exclude_regex = ["_test.go", "_templ.go", "sql\\/.*\\.go", "tailwind.css"]
 include_ext = ["go", "sql", "templ", "css"]

@@ -99,7 +99,7 @@ templ ViewVideo(user *proto.User, video *proto.GetVideoResponse) {
 			</div>
 			<div class="mt-8 flex gap-1 lg:w-3/4 items-center">
 				<span class="text-lg font-semibold"><span x-text="comment_count"></span> Comments</span>
-				@CommentSortSwitcher()
+				@CommentSortSwitcher(video.Id)
 			</div>
 			if user != nil {
 				@CommentBox(user.Id, video.Id, 0, "Comment", false)
@@ -109,15 +109,19 @@ templ ViewVideo(user *proto.User, video *proto.GetVideoResponse) {
 	}
 }
 
-templ CommentSortSwitcher() {
+var refreshSortScript = `
+  htmx.ajax('GET', '/videos/%d/comments?page=0&sort_order=%d', {target: '#comments', swap: 'innerHTML'})
+`
+
+templ CommentSortSwitcher(videoId int64) {
 	<div class="dropdown">
 		<div tabindex="0" role="button" class="btn btn-sm m-1">
 			@icons.ArrowDownWideNarrow(icons.IconProps{Class: "size-4"})
 			Sort
 		</div>
 		<ul tabindex="-1" class="dropdown-content menu bg-base-200 rounded-box z-1 w-52 p-2 shadow-sm">
-			<li><a>Top First</a></li>
-			<li><a>Newest First</a></li>
+			<li><button @click={ fmt.Sprintf(refreshSortScript, videoId, proto.SortOrder_Top) }>Top First</button></li>
+			<li><button @click={ fmt.Sprintf(refreshSortScript, videoId, proto.SortOrder_Newest) }>Newest First</button></li>
 		</ul>
 	</div>
 }

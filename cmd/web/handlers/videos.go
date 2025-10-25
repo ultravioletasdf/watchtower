@@ -90,8 +90,9 @@ func listComments(c *fiber.Ctx) error {
 
 	page := c.QueryInt("page", 0)
 	referenceId := c.QueryInt("reference_id", 0)
+	sortOrder := c.QueryInt("sort_order", 1)
 
-	comments, err := deps.Clients.Videos.ListComments(c.Context(), &proto.ListCommentsRequest{VideoId: videoIdInt, Session: c.Cookies("session"), Page: int32(page), ReferenceId: int64(referenceId)})
+	comments, err := deps.Clients.Videos.ListComments(c.Context(), &proto.ListCommentsRequest{VideoId: videoIdInt, Session: c.Cookies("session"), Page: int32(page), ReferenceId: int64(referenceId), SortOrder: proto.SortOrder(sortOrder)})
 	if err != nil {
 		return c.Status(500).SendString(status.Convert(err).Message())
 	}
@@ -99,5 +100,5 @@ func listComments(c *fiber.Ctx) error {
 	if u := getUser(c); u != nil {
 		uid = u.Id
 	}
-	return Render(c, frontend.CommentList(comments, videoIdInt, int32(page), uid))
+	return Render(c, frontend.CommentList(comments, videoIdInt, int32(page), uid, int32(sortOrder)))
 }

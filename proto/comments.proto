@@ -33,6 +33,7 @@ message ListCommentsRequest {
   int32 page = 2;
   string session = 3;
   int64 reference_id = 4;
+  SortOrder sort_order = 5;
 }
 
 message ListCommentsResponse {
@@ -48,4 +49,9 @@ message EditCommentRequest {
   int64 id = 1;
   string content = 2;
   string session = 3;
+}
+
+enum SortOrder {
+  Newest = 0;
+  Top = 1;
 }

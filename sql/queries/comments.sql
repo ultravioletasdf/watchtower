@@ -30,6 +30,8 @@ GROUP BY
   r.type,
   replies.count
 ORDER BY
+  -- Sort by likes, then id when sort_order is 1, otherwise sort by id
+  CASE WHEN @sort_order::int = 1 THEN count(l) END DESC,
   c.id DESC
 LIMIT
   10

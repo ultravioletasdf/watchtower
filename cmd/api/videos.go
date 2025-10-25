@@ -253,7 +253,8 @@ func (s *videoServer) ListComments(ctx context.Context, req *proto.ListCommentsR
 		ref.Int64 = req.ReferenceId
 		ref.Valid = true
 	}
-	comments, err := executor.ListComments(ctx, sqlc.ListCommentsParams{VideoID: req.VideoId, Offset: req.Page * 10, UserID: userId, ReferenceID: ref})
+	fmt.Println(req.SortOrder)
+	comments, err := executor.ListComments(ctx, sqlc.ListCommentsParams{VideoID: req.VideoId, Offset: req.Page * 10, UserID: userId, ReferenceID: ref, SortOrder: int32(req.SortOrder)})
 	if err != nil {
 		return nil, common.ErrInternal(err)
 	}
