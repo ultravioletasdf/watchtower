@@ -15,12 +15,12 @@ import (
 	"os"
 
 	"github.com/bwmarrin/snowflake"
+	gorseClient "github.com/gorse-io/gorse-go"
 	"github.com/joho/godotenv"
 	"github.com/minio/minio-go/v7"
 	"github.com/rabbitmq/amqp091-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
-
 	"videoapp/internal/generated/proto"
 	"videoapp/internal/generated/sqlc"
 	"videoapp/internal/generated/vips"
@@ -35,6 +35,7 @@ var executor *sqlc.Queries
 var s3 *minio.Client
 var privateKey *ecdsa.PrivateKey
 var rabbit Rabbit
+var gorse *gorseClient.GorseClient
 
 type Rabbit struct {
 	connection *amqp091.Connection
@@ -72,7 +73,7 @@ func main() {
 	db := utils.ConnectDatabase(cfg)
 	defer db.Close(context.Background())
 	executor = db.Queries
-
+	gorse = gorseClient.NewGorseClient(cfg.Gorse.Address, cfg.Gorse.Key)
 	connectRabbit()
 	defer rabbit.Close()
 

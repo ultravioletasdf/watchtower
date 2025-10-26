@@ -72,10 +72,11 @@ FROM videos
 WHERE id = ANY(sqlc.arg(ids)::bigint[]);
 
 -- name: GetUsersFollowingVideos :many
-SELECT v.*
+SELECT v.*, u.username
 FROM videos as v
 JOIN follows as f
     ON v.user_id = f.user_id
+LEFT JOIN users u ON v.user_id = u.id
 WHERE f.follower_id = $1
     AND v.stage = 3
     AND visibility = 0
@@ -90,3 +91,8 @@ SET
 WHERE
     id = $2
     AND STAGE <> 4;
+
+-- name: GetVideoBulk :many
+SELECT v.*, u.username FROM videos AS v
+LEFT JOIN users u ON v.user_id = u.id
+WHERE v.id = ANY(sqlc.arg(ids)::bigint[]);

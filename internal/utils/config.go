@@ -16,6 +16,10 @@ type Config struct {
 		Ip   string `envconfig:"SERVER_IP"`
 		Port int    `envconfig:"SERVER_PORT"`
 	}
+	Gorse struct {
+		Address string `envconfig:"GORSE_ADDRESS"`
+		Key     string `envconfig:"GORSE_KEY"`
+	}
 	SnowflakeNode   int64
 	AmqpUrl         string `envconfig:"AMQP_URL"`
 	TranscodeNvidia bool   `envconfig:"TRANSCODE_NVIDIA"`

@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	client "github.com/gorse-io/gorse-go"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/minio/minio-go/v7"
 	"github.com/rabbitmq/amqp091-go"
@@ -100,6 +101,10 @@ func (s *videoServer) Create(ctx context.Context, req *proto.VideosCreateRequest
 	if err != nil {
 		return nil, common.ErrInternal(err)
 	}
+
+	if _, err := gorse.InsertItem(ctx, client.Item{ItemId: id.String(), Timestamp: time.Now(), Comment: req.Title}); err != nil {
+		fmt.Println(err.Error())
+	}
 	return &proto.VideosCreateResponse{Id: id.Int64()}, nil
 }
 func (s *videoServer) GetUserVideos(ctx context.Context, req *proto.GetUserVideosRequest) (*proto.GetUserVideosResponse, error) {
@@ -136,7 +141,8 @@ func (s *videoServer) Get(ctx context.Context, req *proto.GetVideoRequest) (*pro
 		return nil, common.ErrInternal(err)
 	}
 
-	if v.Visibility == int32(proto.Visibility_Private) {
+	var userId int64
+	if req.Session != "" {
 		if len(req.Session) != SESSION_TOKEN_LENGTH {
 			return nil, common.ErrSessionWrongSize
 		}
@@ -144,14 +150,19 @@ func (s *videoServer) Get(ctx context.Context, req *proto.GetVideoRequest) (*pro
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, common.ErrSessionNotFound
 		}
-		if v.UserID != user.ID {
-			return nil, common.ErrUnauthorized
+		if err == nil {
+			userId = user.ID
 		}
+	}
+
+	// return ErrUnauthorized on private videos where the user is not the owner or the user is not logged in
+	if v.Visibility == int32(proto.Visibility_Private) && v.UserID != userId {
+		return nil, common.ErrUnauthorized
 	}
 
 	var userReaction int32
 	if req.Session != "" {
-		reaction, err := executor.GetReaction(ctx, sqlc.GetReactionParams{TargetID: req.Id, Token: req.Session})
+		reaction, err := executor.GetReaction(ctx, sqlc.GetReactionParams{TargetID: req.Id, UserID: userId})
 		if !errors.Is(err, sql.ErrNoRows) && err != nil {
 			return nil, common.ErrInternal(err)
 		}
@@ -161,6 +172,10 @@ func (s *videoServer) Get(ctx context.Context, req *proto.GetVideoRequest) (*pro
 	payload, sig, err := utils.GeneratePresignedUrl(privateKey, v.UploadID, req.Session)
 	if err != nil {
 		return nil, err
+	}
+
+	if _, err := gorse.InsertFeedback(ctx, []client.Feedback{{FeedbackType: "read", UserId: fmt.Sprint(userId), ItemId: fmt.Sprint(v.ID), Timestamp: time.Now()}}); err != nil {
+		fmt.Println("Failed to insert read feedback, ", err)
 	}
 
 	return &proto.GetVideoResponse{Id: v.ID, Title: v.Title, Visibility: proto.Visibility(v.Visibility), CreatedAt: v.CreatedAt.Time.Unix(), ThumbnailId: v.ThumbnailID, UploadId: v.UploadID, UserId: v.UserID, Stage: proto.Stage(v.Stage), AuthorizationPayload: payload, AuthorizationSignature: sig, Likes: v.Likes, Dislikes: v.Dislikes, UserReaction: userReaction, Comments: v.Comments}, nil
@@ -234,6 +249,10 @@ func (s *videoServer) CreateComment(ctx context.Context, req *proto.CreateCommen
 	id := snowflakeNode.Generate().Int64()
 
 	err = executor.CreateComment(ctx, sqlc.CreateCommentParams{ID: id, VideoID: req.VideoId, ReferenceID: pgtype.Int8{Int64: req.ReferenceId, Valid: req.ReferenceId != 0}, Content: req.Content, UserID: user.ID})
+
+	if _, err := gorse.InsertFeedback(ctx, []client.Feedback{{FeedbackType: "comment", UserId: fmt.Sprint(user.ID), ItemId: fmt.Sprint(req.VideoId), Timestamp: time.Now()}}); err != nil {
+		fmt.Println("Failed to insert comment feedback, ", err)
+	}
 	return &proto.Comment{Id: id, UserId: user.ID, VideoId: req.VideoId, ReferenceId: req.ReferenceId, Content: req.Content, Username: user.Username}, common.ErrInternal(err)
 }
 func (s *videoServer) ListComments(ctx context.Context, req *proto.ListCommentsRequest) (*proto.ListCommentsResponse, error) {

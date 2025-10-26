@@ -91,7 +91,7 @@ templ Comment(c *proto.Comment, userId int64) {
 				@UserLink(c.Username) {
 					<span class="font-bold">{ c.Username }</span>
 				}
-				<span class="opacity-80">{ formatDate(snowflake.ParseInt64(c.Id).Time()/1000) }</span>
+				<span class="opacity-80">{ FormatSnowflakeDate(c.Id) }</span>
 			</span>
 			<span>{ c.Content } </span>
 			<!-- Interaction row -->
@@ -195,4 +195,9 @@ templ UserLinkId(id int64) {
 	<a href={ fmt.Sprintf("/user/id/%d", id) }>
 		{ children... }
 	</a>
+}
+
+// Returns a formatted date from a Snowflake ID
+func FormatSnowflakeDate(id int64) string {
+	return formatDate(snowflake.ParseInt64(id).Time() / 1000)
 }

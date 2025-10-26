@@ -6,8 +6,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
+	client "github.com/gorse-io/gorse-go"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/mattn/go-sqlite3"
 	"github.com/minio/minio-go/v7"
@@ -39,7 +41,7 @@ func (s *userServer) Create(ctx context.Context, req *proto.CreateRequest) (*pro
 		return nil, common.ErrPasswordWrongSize
 	}
 
-	id := snowflakeNode.Generate().Int64()
+	id := snowflakeNode.Generate()
 	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, common.ErrInternal(err)
@@ -50,7 +52,7 @@ func (s *userServer) Create(ctx context.Context, req *proto.CreateRequest) (*pro
 	}
 	expireAt := time.Now().Add(15 * time.Minute)
 
-	err = executor.CreateUser(ctx, sqlc.CreateUserParams{ID: id, Email: req.Email, Username: req.Username, Password: hash, VerifyCode: verifyCode, VerifyExpireAt: pgtype.Timestamptz{Time: expireAt, Valid: true}})
+	err = executor.CreateUser(ctx, sqlc.CreateUserParams{ID: id.Int64(), Email: req.Email, Username: req.Username, Password: hash, VerifyCode: verifyCode, VerifyExpireAt: pgtype.Timestamptz{Time: expireAt, Valid: true}})
 	if err, ok := err.(sqlite3.Error); ok && err.ExtendedCode == sqlite3.ErrConstraintUnique {
 		switch utils.ErrUniqueConstraintFieldName(err) {
 		case "users.username":
@@ -61,6 +63,9 @@ func (s *userServer) Create(ctx context.Context, req *proto.CreateRequest) (*pro
 	}
 	if err != nil {
 		return nil, common.ErrInternal(err)
+	}
+	if _, err := gorse.InsertUser(ctx, client.User{UserId: id.String(), Comment: req.Username}); err != nil {
+		fmt.Println(err)
 	}
 	return &proto.CreateResponse{Id: uint64(id)}, nil
 }
@@ -168,7 +173,7 @@ func (s *userServer) GetFollowingVideos(ctx context.Context, req *proto.GetFollo
 
 	result := make([]*proto.Video, len(videos))
 	for i, v := range videos {
-		result[i] = &proto.Video{Id: v.ID, Title: v.Title, Visibility: proto.Visibility(v.Visibility), CreatedAt: timestamppb.New(v.CreatedAt.Time), ThumbnailId: v.ThumbnailID, Stage: proto.Stage(v.Stage), UserId: v.UserID}
+		result[i] = &proto.Video{Id: v.ID, Title: v.Title, Visibility: proto.Visibility(v.Visibility), CreatedAt: timestamppb.New(v.CreatedAt.Time), ThumbnailId: v.ThumbnailID, Stage: proto.Stage(v.Stage), UserId: v.UserID, Username: v.Username.String}
 	}
 	return &proto.GetFollowingVideosResponse{Videos: result}, nil
 }
@@ -231,4 +236,31 @@ func (s *userServer) UpdateProfile(ctx context.Context, req *proto.UpdateProfile
 		return nil, common.ErrSessionNotFound
 	}
 	return nil, common.ErrInternal(err)
+}
+
+func (s *userServer) ListRecommendations(ctx context.Context, req *proto.ListRecommendationsRequest) (*proto.ListRecommendationsResponse, error) {
+	user, err := executor.GetUserFromSession(ctx, req.Session)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, common.ErrUnauthorized
+	} else if err != nil {
+		return nil, common.ErrInternal(err)
+	}
+	videosIdStrings, err := gorse.GetRecommendOffSet(ctx, fmt.Sprint(user.ID), "", 10, int(req.Page)*10)
+	if err != nil {
+		return nil, common.ErrInternal(err)
+	}
+	videoIds := make([]int64, len(videosIdStrings))
+	for i, s := range videosIdStrings {
+		videoIds[i], _ = strconv.ParseInt(s, 10, 64)
+	}
+	videos, err := executor.GetVideoBulk(ctx, videoIds)
+	if err != nil {
+		return nil, common.ErrInternal(err)
+	}
+	response := make([]*proto.Video, len(videos))
+	for i, v := range videos {
+		response[i] = &proto.Video{UserId: v.UserID, Id: v.ID, Title: v.Title, Visibility: proto.Visibility(v.Visibility), ThumbnailId: v.ThumbnailID, Stage: proto.Stage(v.Stage), CreatedAt: timestamppb.New(v.CreatedAt.Time), Username: user.Username}
+	}
+
+	return &proto.ListRecommendationsResponse{Videos: response}, nil
 }

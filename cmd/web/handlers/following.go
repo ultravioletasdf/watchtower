@@ -23,7 +23,7 @@ func following(c *fiber.Ctx) error {
 	}
 
 	if page > 0 {
-		return Render(c, frontend.FollowingVideos(videos.Videos, page+1))
+		return Render(c, frontend.VideoList(videos.Videos, page+1))
 	}
 
 	return Render(c, frontend.Following(u, videos.Videos))

@@ -9,29 +9,50 @@ templ Following(user *proto.User, videos []*proto.Video) {
 	@AppLayout(user) {
 		Following
 		<div class="gap-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 mt-1">
-			@FollowingVideos(videos, 1)
+			@VideoList(videos, 1)
 		</div>
 	}
 }
 
-templ FollowingVideos(videos []*proto.Video, page int) {
+templ VideoList(videos []*proto.Video, page int) {
 	for i, v := range videos {
-		<a
-			href={ templ.SafeURL(fmt.Sprintf("/videos/%d", v.Id)) }
+		<div
+			class="flex flex-col gap-1"
 			if len(videos) - 1 == i {
 				hx-get={ fmt.Sprintf("/following/?page=%d", page) }
 				hx-trigger="intersect once"
 				hx-swap="afterend"
 			}
 		>
-			<div
-				style="--opacity: 0"
-				class={ "bg-base bg-cover bg-center aspect-video rounded flex items-center justify-center", BackgroundThumbnail(v.ThumbnailId) }
-			></div>
-			{ v.Title }
-			<div class="text-sm text-base-content/70">
-				{ formatDate(v.CreatedAt.Seconds) }
+			@VideoLink(v.Id) {
+				<div
+					href={ templ.SafeURL(fmt.Sprintf("/videos/%d", v.Id)) }
+					style="--opacity: 0"
+					class={ "bg-base bg-cover bg-center aspect-video rounded flex items-center justify-center", BackgroundThumbnail(v.ThumbnailId) }
+				></div>
+			}
+			<div class="flex gap-2">
+				@UserLink(v.Username) {
+					@Avatar(v.UserId, "size-8")
+				}
+				<div class="flex flex-col">
+					@VideoLink(v.Id) {
+						{ v.Title }
+					}
+					<div class="flex gap-2 text-sm text-base-content/70">
+						@UserLink(v.Username) {
+							<span class="hover:text-base-content/100">{ v.Username }</span>
+						}
+						<span>{ FormatSnowflakeDate(v.Id) }</span>
+					</div>
+				</div>
 			</div>
-		</a>
+		</div>
 	}
+}
+
+templ VideoLink(videoId int64) {
+	<a href={ templ.SafeURL(fmt.Sprintf("/videos/%d", videoId)) }>
+		{ children... }
+	</a>
 }

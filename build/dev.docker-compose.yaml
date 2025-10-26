@@ -14,6 +14,7 @@ services:
     environment:
       POSTGRES_PASSWORD: dev
     volumes:
-      - ./tmp/postgres-data:/var/lib/postgressql/data
+      - ./tmp/postgres-data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+

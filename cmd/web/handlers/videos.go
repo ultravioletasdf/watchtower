@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -101,4 +102,14 @@ func listComments(c *fiber.Ctx) error {
 		uid = u.Id
 	}
 	return Render(c, frontend.CommentList(comments, videoIdInt, int32(page), uid, int32(sortOrder)))
+}
+
+func getRecommendations(c *fiber.Ctx) error {
+	page := c.QueryInt("page", 0)
+	videos, err := deps.Clients.Users.ListRecommendations(c.Context(), &proto.ListRecommendationsRequest{Session: c.Cookies("session"), Page: int32(page)})
+	if err != nil {
+		return c.Status(500).SendString(err.Error())
+	}
+	fmt.Println(videos)
+	return Render(c, frontend.VideoList(videos.Videos, page+1))
 }

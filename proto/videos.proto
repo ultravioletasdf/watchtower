@@ -12,7 +12,6 @@ service Videos {
   rpc Create(VideosCreateRequest) returns (VideosCreateResponse);
   rpc GetUserVideos(GetUserVideosRequest) returns (GetUserVideosResponse);
   rpc Get(GetVideoRequest) returns (GetVideoResponse);
-  rpc GetUserFollowingVideos(GetUserFollowingVideosRequest) returns (GetUserFollowingVideosRequest);
   rpc GetStage(VideosGetStageRequest) returns (VideosGetStageResponse);
   rpc GetStages(VideosGetStagesRequest) returns (VideosGetStagesResponse);
   rpc Delete(DeleteVideoRequest) returns (DeleteVideoResponse);
@@ -81,8 +80,6 @@ message DeleteVideoRequest {
 }
 message DeleteVideoResponse {}
 
-message GetUserFollowingVideosRequest {}
-message GetUserFollowingVideosResponse {}
 service Thumbnails {
   rpc CreateUpload(CreateUploadRequest) returns (CreateUploadResponse);
   rpc Process(ThumbnailsProcessRequest) returns (ThumbnailsProcessResponse);

@@ -34,6 +34,8 @@ func Add(app *fiber.App, dependencies Dependencies) {
 	deps = dependencies
 	app.Get("/", root)
 
+	app.Get("/recommendations", getRecommendations)
+
 	app.Get("/sign/in", signIn)
 	app.Post("/sign/in", postSignIn)
 	app.Get("/sign/up", signUp)
