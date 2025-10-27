@@ -47,8 +47,13 @@ templ ViewVideo(user *proto.User, video *proto.GetVideoResponse) {
 		<div x-data={ fmt.Sprintf("{ comment_count: %d }", video.Comments) }>
 			@VideoStatusPoller(video)
 			<div class="flex justify-between pt-2 lg:w-3/4">
-				<div class="flex flex-col w-full">
-					<span class="text-xl font-bold">{ video.Title }</span>
+				<div class="flex flex-col w-4/6">
+					<div class="tooltip">
+						<div class="tooltip-content wrap-anywhere z-50">
+							{ video.Title }
+						</div>
+						<div class="text-xl max-w-full font-bold overflow-ellipsis overflow-hidden text-nowrap">{ video.Title }</div>
+					</div>
 					<div class="flex flex-row gap-2 items-center">
 						@UserLinkId(video.UserId) {
 							@Avatar(video.UserId, "size-12")
@@ -66,7 +71,7 @@ templ ViewVideo(user *proto.User, video *proto.GetVideoResponse) {
 				</div>
 				<!-- Interaction Buttons -->
 				<div
-					class="join"
+					class="join shrink"
 					x-data={ fmt.Sprintf("{ reaction: %d, likeCount: %d, dislikeCount: %d }", video.UserReaction,
       video.Likes, video.Dislikes) }
 				>

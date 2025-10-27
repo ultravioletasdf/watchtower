@@ -134,7 +134,12 @@ templ ProfileVideoList(videos []*proto.GetUserVideosResponseVideo) {
 					}
 				</div>
 				<div class="px-4 pt-4 leading-none">
-					{ v.Title }
+					<div class="tooltip w-full">
+						<div class="tooltip-content wrap-anywhere z-50">
+							{ v.Title }
+						</div>
+						<div class="max-w-full overflow-ellipsis overflow-hidden text-nowrap">{ v.Title }</div>
+					</div>
 					<div class="text-sm text-base-content/70">
 						{ formatDate(v.CreatedAt) }
 					</div>

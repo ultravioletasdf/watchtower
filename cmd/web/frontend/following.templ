@@ -35,9 +35,14 @@ templ VideoList(videos []*proto.Video, page int) {
 				@UserLink(v.Username) {
 					@Avatar(v.UserId, "size-8")
 				}
-				<div class="flex flex-col">
+				<div class="flex flex-col grow w-[calc(100%-40px)]">
 					@VideoLink(v.Id) {
-						{ v.Title }
+						<div class="tooltip w-full">
+							<div class="tooltip-content wrap-anywhere z-50">
+								{ v.Title }
+							</div>
+							<div class="max-w-full overflow-ellipsis overflow-hidden text-nowrap">{ v.Title }</div>
+						</div>
 					}
 					<div class="flex gap-2 text-sm text-base-content/70">
 						@UserLink(v.Username) {
@@ -52,7 +57,7 @@ templ VideoList(videos []*proto.Video, page int) {
 }
 
 templ VideoLink(videoId int64) {
-	<a href={ templ.SafeURL(fmt.Sprintf("/videos/%d", videoId)) }>
+	<a class="leading-none" href={ templ.SafeURL(fmt.Sprintf("/videos/%d", videoId)) }>
 		{ children... }
 	</a>
 }
