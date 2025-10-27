@@ -106,7 +106,7 @@ templ Comment(c *proto.Comment, userId int64) {
 					if userId == 0 {
 						@click="$store.showSignInModal = true"
 					} else {
-						@click={ fmt.Sprintf(likeScript, c.Id, c.Id) }
+						@click={ fmt.Sprintf(likeScript, c.Id, proto.TargetType_COMMENT, c.Id, proto.TargetType_COMMENT) }
 					}
 				>
 					@icons.ThumbsUp(iconSize)
@@ -119,7 +119,7 @@ templ Comment(c *proto.Comment, userId int64) {
 					if userId == 0 {
 						@click="$store.showSignInModal = true"
 					} else {
-						@click={ fmt.Sprintf(dislikeScript, c.Id, c.Id) }
+						@click={ fmt.Sprintf(dislikeScript, c.Id, proto.TargetType_COMMENT, c.Id, proto.TargetType_COMMENT) }
 					}
 				>
 					@icons.ThumbsDown(iconSize)
@@ -138,11 +138,11 @@ templ Comment(c *proto.Comment, userId int64) {
 						@icons.Reply(iconSize)
 						Reply
 					</button>
-					<!-- 
-            View Replies (shows only when there are actually replies)
-            Loads replies on first hover
-            Toggles replies on each click
-          -->
+					<!--
+			            View Replies (shows only when there are actually replies)
+			            Loads replies on first hover
+			            Toggles replies on each click
+			          -->
 					<button
 						class="btn btn-sm rounded-full w-fit btn-info"
 						hx-get={ fmt.Sprintf("/videos/%d/comments?reference_id=%d", c.VideoId, c.Id) }

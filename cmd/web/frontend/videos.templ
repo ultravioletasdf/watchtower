@@ -17,10 +17,10 @@ likeCount++
 };
 if (reaction == 1) {
 reaction = 0;
-htmx.ajax('DELETE', '/reactions/%d', { swap: 'none' })
+htmx.ajax('DELETE', '/reactions/%d?target_type=%d', { swap: 'none' })
 } else {
 reaction = 1;
-htmx.ajax('PUT', '/reactions/%d/1', { swap: 'none' })
+htmx.ajax('PUT', '/reactions/%d/1?target_type=%d', { swap: 'none' })
 };`
 var dislikeScript = `
 if (reaction == 2) {
@@ -32,10 +32,10 @@ dislikeCount++
 };
 if (reaction == 2) {
 reaction = 0;
-htmx.ajax('DELETE', '/reactions/%d', { swap: 'none' })
+htmx.ajax('DELETE', '/reactions/%d?target_type=%d', { swap: 'none' })
 } else {
 reaction = 2;
-htmx.ajax('PUT', '/reactions/%d/2', { swap: 'none' })
+htmx.ajax('PUT', '/reactions/%d/2?target_type=%d', { swap: 'none' })
 };`
 
 templ ViewVideo(user *proto.User, video *proto.GetVideoResponse) {
@@ -76,7 +76,7 @@ templ ViewVideo(user *proto.User, video *proto.GetVideoResponse) {
 							if user == nil {
 								@click="$store.showSignInModal = true"
 							} else {
-								@click={ fmt.Sprintf(likeScript, video.Id, video.Id) }
+								@click={ fmt.Sprintf(likeScript, video.Id, proto.TargetType_VIDEO, video.Id, proto.TargetType_VIDEO) }
 							}
 						>
 							@icons.ThumbsUp(iconSize)
@@ -88,7 +88,7 @@ templ ViewVideo(user *proto.User, video *proto.GetVideoResponse) {
 							if user == nil {
 								@click="$store.showSignInModal = true"
 							} else {
-								@click={ fmt.Sprintf(dislikeScript, video.Id, video.Id) }
+								@click={ fmt.Sprintf(dislikeScript, video.Id, proto.TargetType_VIDEO, video.Id, proto.TargetType_VIDEO) }
 							}
 						>
 							@icons.ThumbsDown(iconSize)
