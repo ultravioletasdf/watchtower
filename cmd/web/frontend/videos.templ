@@ -3,6 +3,7 @@ package frontend
 import (
 	"fmt"
 	"github.com/dimmerz92/go-lucide-icons/pkg/templ/icons"
+	"strings"
 	"videoapp/internal/generated/proto"
 )
 
@@ -46,14 +47,13 @@ templ ViewVideo(user *proto.User, video *proto.GetVideoResponse) {
 		<div x-data={ fmt.Sprintf("{ comment_count: %d }", video.Comments) }>
 			@VideoStatusPoller(video)
 			<div class="flex justify-between pt-2 lg:w-3/4">
-				<div class="flex flex-col">
+				<div class="flex flex-col w-full">
 					<span class="text-xl font-bold">{ video.Title }</span>
-					// { formatDate(video.CreatedAt) }
 					<div class="flex flex-row gap-2 items-center">
 						@UserLinkId(video.UserId) {
 							@Avatar(video.UserId, "size-12")
 						}
-						// Load extra user information
+						<!-- Load extra user information -->
 						<div
 							class="flex flex-row gap-4 items-center"
 							id="extrauserinfo"
@@ -64,37 +64,47 @@ templ ViewVideo(user *proto.User, video *proto.GetVideoResponse) {
 						></div>
 					</div>
 				</div>
-				<div>
-					<div
-						class="join"
-						x-data={ fmt.Sprintf("{ reaction: %d, likeCount: %d, dislikeCount: %d }", video.UserReaction,
+				<!-- Interaction Buttons -->
+				<div
+					class="join"
+					x-data={ fmt.Sprintf("{ reaction: %d, likeCount: %d, dislikeCount: %d }", video.UserReaction,
       video.Likes, video.Dislikes) }
+				>
+					<!-- Like -->
+					<button
+						class="btn btn-sm join-item rounded-l-full"
+						:class="reaction == 1 && 'btn-primary'"
+						if user == nil {
+							@click="$store.showSignInModal = true"
+						} else {
+							@click={ fmt.Sprintf(likeScript, video.Id, proto.TargetType_VIDEO, video.Id, proto.TargetType_VIDEO) }
+						}
 					>
-						<button
-							class="btn btn-sm join-item rounded-l-full"
-							:class="reaction == 1 && 'btn-primary'"
-							if user == nil {
-								@click="$store.showSignInModal = true"
-							} else {
-								@click={ fmt.Sprintf(likeScript, video.Id, proto.TargetType_VIDEO, video.Id, proto.TargetType_VIDEO) }
-							}
-						>
-							@icons.ThumbsUp(iconSize)
-							<div x-text="likeCount"></div>
-						</button>
-						<button
-							class="btn btn-sm join-item rounded-r-full"
-							:class="reaction == 2 && 'btn-primary'"
-							if user == nil {
-								@click="$store.showSignInModal = true"
-							} else {
-								@click={ fmt.Sprintf(dislikeScript, video.Id, proto.TargetType_VIDEO, video.Id, proto.TargetType_VIDEO) }
-							}
-						>
-							@icons.ThumbsDown(iconSize)
-							<div x-text="dislikeCount"></div>
-						</button>
-					</div>
+						@icons.ThumbsUp(iconSize)
+						<div x-text="likeCount"></div>
+					</button>
+					<!-- Dislike -->
+					<button
+						class="btn btn-sm join-item rounded-r-full"
+						:class="reaction == 2 && 'btn-primary'"
+						if user == nil {
+							@click="$store.showSignInModal = true"
+						} else {
+							@click={ fmt.Sprintf(dislikeScript, video.Id, proto.TargetType_VIDEO, video.Id, proto.TargetType_VIDEO) }
+						}
+					>
+						@icons.ThumbsDown(iconSize)
+						<div x-text="dislikeCount"></div>
+					</button>
+				</div>
+			</div>
+			<!-- Video Info -->
+			<div class="p-4 mt-2 rounded-lg bg-base-200 lg:w-3/4">
+				<div>{ FormatSnowflakeDate(video.Id) } </div>
+				{{ isLongDescription := len(strings.SplitN(video.Description, "\n", 3)) == 3 }}
+				<div x-data={ fmt.Sprintf("{ long_description: %v, show_more: false }", isLongDescription) }>
+					<div class="line-clamp-3 text-sm whitespace-pre-wrap" :class="show_more && 'line-clamp-none!'">{ video.Description }</div>
+					<button class="mt-2 btn btn-xs" x-show="long_description" x-text="show_more ? 'Less' : 'More'" @click="show_more = !show_more"></button>
 				</div>
 			</div>
 			<div class="mt-8 flex gap-1 lg:w-3/4 items-center">
