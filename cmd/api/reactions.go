@@ -28,6 +28,12 @@ func (s *reactionsServer) React(ctx context.Context, req *proto.ReactRequest) (*
 	if err := executor.React(ctx, sqlc.ReactParams{TargetID: req.VideoId, Type: req.Type, UserID: user.ID}); err != nil {
 		return nil, common.ErrInternal(err)
 	}
+
+	// Only add feedback for video reactions
+	if req.TargetType != proto.TargetType_VIDEO {
+		return nil, nil
+	}
+
 	switch req.Type {
 	case 1:
 		_, err := gorse.InsertFeedback(ctx, []client.Feedback{{UserId: fmt.Sprint(user.ID), ItemId: fmt.Sprint(req.VideoId), FeedbackType: "like", Timestamp: time.Now()}})
@@ -52,6 +58,11 @@ func (s *reactionsServer) Remove(ctx context.Context, req *proto.RemoveRequest) 
 
 	if err := executor.RemoveReaction(ctx, sqlc.RemoveReactionParams{TargetID: req.VideoId, UserID: user.ID}); err != nil {
 		return nil, common.ErrInternal(err)
+	}
+
+	// Only remove feedback for video reactions
+	if req.TargetType != proto.TargetType_VIDEO {
+		return nil, nil
 	}
 
 	if _, err := gorse.DeleteFeedback(ctx, "like", fmt.Sprint(user.ID), fmt.Sprint(req.VideoId)); err != nil {

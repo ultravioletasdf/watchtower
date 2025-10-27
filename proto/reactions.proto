@@ -15,8 +15,15 @@ message ReactRequest {
   string session = 1;
   int64 video_id = 2;
   int32 type = 3;
+  TargetType target_type = 4;
 }
 message RemoveRequest {
   string session = 1;
   int64 video_id = 2;
+  TargetType target_type = 3;
+}
+
+enum TargetType {
+  VIDEO = 0;
+  COMMENT = 1;
 }
