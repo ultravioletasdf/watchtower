@@ -180,8 +180,10 @@ func (s *videoServer) Get(ctx context.Context, req *proto.GetVideoRequest) (*pro
 		return nil, err
 	}
 
-	if _, err := gorse.InsertFeedback(ctx, []client.Feedback{{FeedbackType: "read", UserId: fmt.Sprint(userId), ItemId: fmt.Sprint(v.ID), Timestamp: time.Now()}}); err != nil {
-		fmt.Println("Failed to insert read feedback, ", err)
+	if userId != 0 {
+		if _, err := gorse.InsertFeedback(ctx, []client.Feedback{{FeedbackType: "read", UserId: fmt.Sprint(userId), ItemId: fmt.Sprint(v.ID), Timestamp: time.Now()}}); err != nil {
+			fmt.Println("Failed to insert read feedback, ", err)
+		}
 	}
 
 	return &proto.GetVideoResponse{Id: v.ID, Title: v.Title, Visibility: proto.Visibility(v.Visibility), CreatedAt: v.CreatedAt.Time.Unix(), ThumbnailId: v.ThumbnailID, UploadId: v.UploadID, UserId: v.UserID, Stage: proto.Stage(v.Stage), AuthorizationPayload: payload, AuthorizationSignature: sig, Likes: v.Likes, Dislikes: v.Dislikes, UserReaction: userReaction, Comments: v.Comments, Description: v.Description}, nil

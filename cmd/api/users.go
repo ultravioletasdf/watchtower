@@ -248,12 +248,17 @@ func (s *userServer) ListRecommendations(ctx context.Context, req *proto.ListRec
 			fmt.Println("Failed to get user", err)
 		}
 	}
-	videosIdStrings, err := gorse.GetRecommendOffSet(ctx, fmt.Sprint(uid), "", 10, int(req.Page)*10)
+	var videoIdStrings []string
+	var err error
+
+	videoIdStrings, err = gorse.GetRecommendOffSet(ctx, fmt.Sprint(uid), "", 10, int(req.Page)*10)
 	if err != nil {
 		return nil, common.ErrInternal(err)
 	}
-	videoIds := make([]int64, len(videosIdStrings))
-	for i, s := range videosIdStrings {
+
+	// }
+	videoIds := make([]int64, len(videoIdStrings))
+	for i, s := range videoIdStrings {
 		videoIds[i], _ = strconv.ParseInt(s, 10, 64)
 	}
 	videos, err := executor.GetVideoBulk(ctx, videoIds)
