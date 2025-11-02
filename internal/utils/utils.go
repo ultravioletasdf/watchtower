@@ -66,6 +66,18 @@ func PgTextFromPointer(s *string) pgtype.Text {
 	}
 	return pgtype.Text{String: *s, Valid: true}
 }
+func PgInt8FromPointer(i *int64) pgtype.Int8 {
+	if i == nil {
+		return pgtype.Int8{Valid: false}
+	}
+	return pgtype.Int8{Int64: *i, Valid: true}
+}
+func PgInt4FromPointer(i *int32) pgtype.Int4 {
+	if i == nil {
+		return pgtype.Int4{Valid: false}
+	}
+	return pgtype.Int4{Int32: *i, Valid: true}
+}
 
 type PresignedToken struct {
 	Prefix   string

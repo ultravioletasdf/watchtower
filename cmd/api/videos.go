@@ -152,9 +152,11 @@ func (s *videoServer) Get(ctx context.Context, req *proto.GetVideoRequest) (*pro
 		}
 		if err == nil {
 			userId = user.ID
+		} else {
+			fmt.Println("Error retrieving user: ", err.Error())
 		}
 	}
-
+	fmt.Println(v.Visibility, v.UserID, userId)
 	// return ErrUnauthorized on private videos where the user is not the owner or the user is not logged in
 	if v.Visibility == int32(proto.Visibility_Private) && v.UserID != userId {
 		return nil, common.ErrUnauthorized
@@ -281,4 +283,38 @@ func (s *videoServer) ListComments(ctx context.Context, req *proto.ListCommentsR
 		cs[i] = &proto.Comment{Id: c.ID, UserId: c.UserID, Content: c.Content, Username: c.Username.String, Likes: c.Likes, Dislikes: c.Dislikes, Reaction: c.Type.Int32, VideoId: c.VideoID, ReferenceId: c.ReferenceID.Int64, Replies: c.Replies}
 	}
 	return &proto.ListCommentsResponse{Comments: cs}, nil
+}
+
+func (s *videoServer) Update(ctx context.Context, req *proto.VideosUpdateRequest) (*proto.Empty, error) {
+	user, err := executor.GetUserFromSession(ctx, req.Session)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, common.ErrUnauthorized
+	} else if err != nil {
+		return nil, common.ErrInternal(err)
+	}
+
+	owner, err := executor.GetVideoOwner(ctx, req.Id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, common.ErrVideoNotFound
+	} else if err != nil {
+		return nil, common.ErrInternal(err)
+	}
+
+	// The curent user does not own this video
+	if owner != user.ID {
+		return nil, common.ErrUnauthorized
+	}
+
+	return nil, common.ErrInternal(
+		executor.UpdateVideo(
+			ctx,
+			sqlc.UpdateVideoParams{
+				ID:          req.Id,
+				Title:       utils.PgTextFromPointer(req.Title),
+				Description: utils.PgTextFromPointer(req.Description),
+				ThumbnailID: utils.PgInt8FromPointer(req.ThumbnailId),
+				Visibility:  utils.PgInt4FromPointer((*int32)(req.Visibility)),
+			},
+		),
+	)
 }

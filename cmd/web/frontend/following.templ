@@ -57,7 +57,7 @@ templ VideoList(videos []*proto.Video, page int) {
 }
 
 templ VideoLink(videoId int64) {
-	<a class="leading-none" href={ templ.SafeURL(fmt.Sprintf("/videos/%d", videoId)) }>
+	<a class="leading-none max-w-full" href={ templ.SafeURL(fmt.Sprintf("/videos/%d", videoId)) }>
 		{ children... }
 	</a>
 }

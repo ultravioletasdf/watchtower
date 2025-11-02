@@ -97,43 +97,49 @@ templ AfterUpload(user *proto.User, uploadId string) {
 			<div id="error" class="text-error text-sm text-center"></div>
 		</form>
 	}
+	@ThumbnailUpload()
 	<script defer>
-		document.querySelector('#thumbnailInput').addEventListener("change", onUpload)
-		const label = document.querySelector('#thumbnailLabel')
-		const thumbnailId = document.querySelector('#thumbnailId')
-
-		document.addEventListener("alpine:initializing", () => {
+	    document.addEventListener("alpine:initializing", () => {
     		Alpine.store("thumbnail", {
     		  id: Alpine.$persist("").as("{{ uploadId }}-thumbnail-id"),
               state: Alpine.$persist("not_uploaded").as("{{ uploadId }}-thumbnail-state")
     		})
+	    })
+	</script>
+}
+
+script ThumbnailUpload() {
+	document.querySelector('#thumbnailInput').addEventListener("change", onUpload)
+	const label = document.querySelector('#thumbnailLabel')
+	const thumbnailId = document.querySelector('#thumbnailId')
+
+
+	async function onUpload(e) {
+	    const file = e.target.files[0]
+		let res = await fetch("/upload/thumbnail", {
+		    method: 'POST'
 		})
-		async function onUpload(e) {
-		    const file = e.target.files[0]
-			let res = await fetch("/upload/thumbnail", {
-			    method: 'POST'
-			})
-			const {url, form_data, id} = await res.json()
-			console.log("Starting upload to " + id)
-			Alpine.store("thumbnail").state = "uploading"
-			const formData = new FormData()
-			for (let key in form_data) {
-			  formData.append(key, form_data[key])
-			}
-			formData.append('file', file)
-			await uploadToS3(url, formData)
-			res = await fetch(`/upload/thumbnail/${id}/process`, {
-			  method: 'POST'
-			})
-			if (!res.ok) {
-			    alert("Failed to upload")
-				return
-			}
-			thumbnailId.value = id
-			Alpine.store("thumbnail").id = id
-			Alpine.store("thumbnail").state = "uploaded"
+		const {url, form_data, id} = await res.json()
+		console.log("Starting upload to " + id)
+		Alpine.store("thumbnail").state = "uploading"
+		const formData = new FormData()
+		for (let key in form_data) {
+		  formData.append(key, form_data[key])
 		}
-		function uploadToS3(url, formData) {
+		formData.append('file', file)
+		await uploadToS3(url, formData)
+		res = await fetch(`/upload/thumbnail/${id}/process`, {
+		  method: 'POST'
+		})
+		if (!res.ok) {
+		    alert("Failed to upload")
+			return
+		}
+		thumbnailId.value = id
+		Alpine.store("thumbnail").id = id
+		Alpine.store("thumbnail").state = "uploaded"
+	}
+	function uploadToS3(url, formData) {
     		return new Promise((res, rej) => {
                 const xhr = new XMLHttpRequest()
           		xhr.open('POST', url)
@@ -160,6 +166,5 @@ templ AfterUpload(user *proto.User, uploadId string) {
 
                 xhr.send(formData);
             })
-		}
-	</script>
+	}
 }

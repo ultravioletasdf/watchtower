@@ -113,3 +113,66 @@ func getRecommendations(c *fiber.Ctx) error {
 	fmt.Println(videos)
 	return Render(c, frontend.VideoList(videos.Videos, page+1))
 }
+
+func editVideo(c *fiber.Ctx) error {
+	videoId, err := c.ParamsInt("id")
+	if err != nil {
+		return c.SendStatus(400)
+	}
+
+	user := getUser(c)
+	if user == nil {
+		return c.SendStatus(401)
+	}
+
+	video, err := deps.Clients.Videos.Get(c.Context(), &proto.GetVideoRequest{Session: c.Cookies("session"), Id: int64(videoId)})
+	if err != nil {
+		return c.Status(500).SendString(err.Error())
+	}
+	if video.UserId != user.Id {
+		return c.SendStatus(fiber.StatusForbidden)
+	}
+
+	return Render(c, frontend.EditVideo(user, video))
+}
+
+func saveVideoChanges(c *fiber.Ctx) error {
+	videoId, err := c.ParamsInt("id")
+	if err != nil {
+		return c.SendStatus(400)
+	}
+
+	session := c.Cookies("session")
+	if session == "" {
+		return c.Status(401).SendString("Please sign in to continue")
+	}
+
+	title := formValueToPointer(c, "title")
+	description := formValueToPointer(c, "description")
+	visibility := formValueToPointer(c, "visibility")
+	var visibilityInt *proto.Visibility
+	if visibility != nil {
+		v, ok := proto.Visibility_value[*visibility]
+		if !ok {
+			return c.SendStatus(400)
+		}
+		temp := proto.Visibility(v)
+		visibilityInt = &temp
+	}
+	thumbnailId := formValueToPointer(c, "thumbnail_id")
+	var thumbnailIdInt *int64
+	if thumbnailId != nil {
+		v, err := strconv.ParseInt(*thumbnailId, 10, 64)
+		if err != nil {
+			return c.SendStatus(400)
+		}
+		thumbnailIdInt = &v
+	}
+
+	_, err = deps.Clients.Videos.Update(c.Context(), &proto.VideosUpdateRequest{Session: c.Cookies("session"), Id: int64(videoId), ThumbnailId: thumbnailIdInt, Title: title, Description: description, Visibility: visibilityInt})
+	if err != nil {
+		return c.Status(500).SendString(err.Error())
+	}
+	return Render(c, frontend.SoftSuccess("Saved"))
+
+}

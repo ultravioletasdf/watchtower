@@ -18,7 +18,14 @@ templ Settings(user *proto.User) {
 }
 
 templ SettingsProfile(user *proto.User) {
-	<form hx-put="/settings/profile" @htmx:after-request="console.log($event); if ($event.detail.successful && $event.detail.pathInfo.requestPath == '/settings/profile') { display_name_original = display_name; description_original = description }" hx-target="#toasts" hx-swap="beforeend" class="flex flex-col justify-between h-full" x-data={ templ.JSONString(map[string]any{"display_name": user.DisplayName, "description": user.Description, "display_name_original": user.DisplayName, "description_original": user.Description}) }>
+	<form
+		hx-put="/settings/profile"
+		@htmx:after-request="console.log($event); if ($event.detail.successful && $event.detail.pathInfo.requestPath == '/settings/profile') { display_name_original = display_name; description_original = description }"
+		hx-target="#toasts"
+		hx-swap="beforeend"
+		class="flex flex-col justify-between h-full"
+		x-data={ templ.JSONString(map[string]any{"display_name": user.DisplayName, "description": user.Description, "display_name_original": user.DisplayName, "description_original": user.Description}) }
+	>
 		<div class="flex flex-col lg:flex-row w-full">
 			<div class="w-full lg:w-1/2 flex flex-col gap-2">
 				// Display Name Input

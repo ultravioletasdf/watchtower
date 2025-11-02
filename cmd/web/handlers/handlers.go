@@ -57,6 +57,8 @@ func Add(app *fiber.App, dependencies Dependencies) {
 	app.Delete("/follow/:id", follow)
 
 	app.Get("/videos/:id", viewVideo)
+	app.Get("/videos/:id/edit", editVideo)
+	app.Put("/videos/:id", saveVideoChanges)
 	app.Put("/reactions/:id/:type", react)
 	app.Delete("/reactions/:id", deleteReaction)
 	app.Post("/videos/:id/comments", createComment)

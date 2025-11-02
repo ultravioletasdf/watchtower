@@ -24,16 +24,9 @@ func putProfile(c *fiber.Ctx) error {
 	if session == "" {
 		return c.Status(401).SendString("Please sign in to continue")
 	}
-	var displayName *string
-	if c.FormValue("display_name_changed") == "true" {
-		v := c.FormValue("display_name")
-		displayName = &v
-	}
-	var description *string
-	if c.FormValue("description_changed") == "true" {
-		v := c.FormValue("description")
-		description = &v
-	}
+	displayName := formValueToPointer(c, "display_name")
+	description := formValueToPointer(c, "description")
+
 	_, err := deps.Clients.Users.UpdateProfile(ctx, &proto.UpdateProfileRequest{Session: session, DisplayName: displayName, Description: description})
 	if errors.Is(err, common.ErrSessionNotFound) {
 		return c.Status(401).SendString("Please sign in to continue")

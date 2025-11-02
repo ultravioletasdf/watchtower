@@ -96,3 +96,14 @@ WHERE
 SELECT v.*, u.username FROM videos AS v
 LEFT JOIN users u ON v.user_id = u.id
 WHERE v.id = ANY(sqlc.arg(ids)::bigint[]);
+
+-- name: GetVideoOwner :one
+SELECT user_id FROM videos WHERE id = $1;
+
+-- name: UpdateVideo :exec
+UPDATE videos
+SET thumbnail_id = COALESCE(sqlc.narg(thumbnail_id), thumbnail_id),
+    title = COALESCE(sqlc.narg(title), title),
+    description = COALESCE(sqlc.narg(description), description),
+    visibility = COALESCE(sqlc.narg(visibility), visibility)
+WHERE id = $1;

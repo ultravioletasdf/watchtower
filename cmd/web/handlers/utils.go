@@ -39,3 +39,11 @@ func getUser(c *fiber.Ctx) *proto.User {
 	}
 	return res
 }
+
+func formValueToPointer(c *fiber.Ctx, key string) (val *string) {
+	if c.FormValue(key+"_changed") == "true" {
+		v := c.FormValue(key)
+		val = &v
+	}
+	return
+}
