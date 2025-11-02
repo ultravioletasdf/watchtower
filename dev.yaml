@@ -1,8 +1,8 @@
 services:
     gorse:
-      cmd: docker compose -f ./build/gorse.docker-compose.yaml up
+        cmd: docker compose -f ./build/gorse.docker-compose.yaml up
     minio:
-        cmd: minio server ../tmp/minio
+        cmd: minio server ./tmp/minio
     compose:
         cmd: docker compose -f ./build/dev.docker-compose.yaml up
         wait_for:

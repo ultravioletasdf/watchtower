@@ -1,35 +1,70 @@
-# Developing
+![WatchTower](banner.png)
 
-## Dependencies
+Open Source YouTube clone
+
+- [Developing](#developing)
+- [Running](#running)
+
+## Developing
+
+Dependencies:
+- Docker (Compose)
+- Minio (Recommended)
+- Golang
+- [ProtoBuf](https://protobuf.dev/installation/)
+- [libvips](https://www.libvips.org/install.html)
 
 ```sh
-go install github.com/air-verse/air@latest
-go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
-curl -sSf https://atlasgo.sh | sh
-bun install -g protoc-gen-ts
-go install github.com/cshum/vipsgen/cmd/vipsgen@latest
+# Various tools
+
+# Devman (Run many services via one command)
 go install github.com/ultravioletasdf/devman@latest
+# Air (Hot reload)
+go install github.com/air-verse/air@latest
+# Atlas (Automatic migrations)
+curl -sSf https://atlasgo.sh | sh
+# SQLc (Automatic SQL -> Go Bindings)
+go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+# Vips (image processing)
+go install github.com/cshum/vipsgen/cmd/vipsgen@latest
+# Minio (S3 Server)
+go install github.com/minio/minio@latest
+# Minio Client
+go install github.com/minio/mc@latest
+# Protobuf/gRPC plugins
+go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+# vipsgen
+go install github.com/cshum/vipsgen/cmd/vipsgen@latest
 ```
 
-### S3
+### S3 Setup
 
-For local development you can use MinIO + MinIO Client: [Download](https://min.io/open-source/download?platform=linux])
+1. Run minio (`minio server ./tmp/server`)
+2. Create an alias:
 
-Once minio is running, you can create an access key with:
 ```sh
-mcli alias set 'dev' 'http://127.0.0.1:9000' 'minioadmin' 'minioadmin'
-mcli admin accesskey create dev
+mc alias set dev http://127.0.0.1:9000 minioadmin minioadmin
+```
+
+3. Set permissions
+```sh
+mc anonymous set download dev/avatars
+mc anonymous set download dev/thumbnails
+```
+
+### Vips setup
+```sh
+# Run this to generate VIPS bindings
+make gen/vips
 ```
 
 ## Running
 
 ### Environment
 
-Copy `.env.example` to `.env` and update the values.
+Copy `build/.env.example` to `.env` and update the values.
+
 If you have an nvidia gpu, set `TRANSCODE_NVIDIA=true` to make processing videos faster
 
-After that, you can start all needed tools with:
-```sh
-# Starts minio, rabbitmq, video queues and the server/webclient
-devman
-```
+After that, you can start all needed tools by running `devman`
