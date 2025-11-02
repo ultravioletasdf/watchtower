@@ -12,8 +12,8 @@ import (
 
 	common "videoapp/internal/errors"
 	"videoapp/internal/generated/proto"
-	"videoapp/internal/generated/vips"
 	sqlc "videoapp/internal/generated/sqlc"
+	"videoapp/internal/generated/vips"
 )
 
 type thumbnailsServer struct {
@@ -39,7 +39,7 @@ func (s *thumbnailsServer) CreateUpload(ctx context.Context, req *proto.CreateUp
 
 	policy.SetContentLengthRange(1024, 1024*1024*2)
 
-	url, fd, err := s3.PresignedPostPolicy(ctx, policy)
+	u, fd, err := s3.PresignedPostPolicy(ctx, policy)
 	if err != nil {
 		return nil, common.ErrInternal(err)
 	}
@@ -48,7 +48,11 @@ func (s *thumbnailsServer) CreateUpload(ctx context.Context, req *proto.CreateUp
 		return nil, common.ErrInternal(err)
 	}
 
-	return &proto.CreateUploadResponse{Url: url.String(), Id: id.Int64(), FormData: fd}, nil
+	mu, _ := u.Parse(cfg.MediaAddress)
+	u.Host = mu.Host
+	u.Scheme = mu.Scheme
+
+	return &proto.CreateUploadResponse{Url: u.String(), Id: id.Int64(), FormData: fd}, nil
 }
 func (s *thumbnailsServer) Process(ctx context.Context, req *proto.ThumbnailsProcessRequest) (*proto.ThumbnailsProcessResponse, error) {
 	if len(req.Session) != SESSION_TOKEN_LENGTH {

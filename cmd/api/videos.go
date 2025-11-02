@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -43,7 +44,7 @@ func (s *videoServer) CreateUpload(ctx context.Context, req *proto.CreateUploadR
 
 	policy.SetContentLengthRange(1024*1024, 1024*1024*1024*10)
 
-	url, fd, err := s3.PresignedPostPolicy(ctx, policy)
+	u, fd, err := s3.PresignedPostPolicy(ctx, policy)
 	if err != nil {
 		return nil, common.ErrInternal(err)
 	}
@@ -53,7 +54,11 @@ func (s *videoServer) CreateUpload(ctx context.Context, req *proto.CreateUploadR
 		return nil, common.ErrInternal(err)
 	}
 
-	return &proto.CreateUploadResponse{Url: url.String(), Id: id.Int64(), FormData: fd}, nil
+	mu, _ := url.Parse(cfg.MediaAddress)
+	u.Host = mu.Host
+	u.Scheme = mu.Scheme
+
+	return &proto.CreateUploadResponse{Url: u.String(), Id: id.Int64(), FormData: fd}, nil
 }
 
 func (s *videoServer) Create(ctx context.Context, req *proto.VideosCreateRequest) (*proto.VideosCreateResponse, error) {
