@@ -156,7 +156,6 @@ func (s *videoServer) Get(ctx context.Context, req *proto.GetVideoRequest) (*pro
 			fmt.Println("Error retrieving user: ", err.Error())
 		}
 	}
-	fmt.Println(v.Visibility, v.UserID, userId)
 	// return ErrUnauthorized on private videos where the user is not the owner or the user is not logged in
 	if v.Visibility == int32(proto.Visibility_Private) && v.UserID != userId {
 		return nil, common.ErrUnauthorized
