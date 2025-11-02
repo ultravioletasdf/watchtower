@@ -16,7 +16,7 @@ import (
 func main() {
 	var deps handlers.Dependencies
 	deps.Config = utils.ParseConfig()
-
+	fmt.Println("mediaaddress", deps.Config.MediaAddress, "cdnaddr", deps.Config.CdnAddress)
 	serverAddress := fmt.Sprintf("%s:%d", deps.Config.Server.Ip, deps.Config.Server.Port)
 	client, err := grpc.NewClient(serverAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {

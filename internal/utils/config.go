@@ -24,6 +24,8 @@ type Config struct {
 	AmqpUrl         string `envconfig:"AMQP_URL"`
 	TranscodeNvidia bool   `envconfig:"TRANSCODE_NVIDIA"`
 	PostgresUrl     string `envconfig:"POSTGRES_URL"`
+	MediaAddress    string `envconfig:"MEDIA_ADDRESS"`
+	CdnAddress      string `envconfig:"CDN_ADDRESS"`
 }
 
 func ParseConfig() (config Config) {

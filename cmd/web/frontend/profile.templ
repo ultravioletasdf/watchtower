@@ -160,7 +160,7 @@ templ ProfileVideoList(videos []*proto.GetUserVideosResponseVideo, viewingUser *
 }
 
 css BackgroundThumbnail(id int64) {
-	background-image: { templ.SafeCSSProperty(fmt.Sprintf("linear-gradient(rgba(0, 0, 0, var(--opacity)), rgba(0, 0, 0, var(--opacity))), url(\"http://localhost:9000/thumbnails/%d.webp\")", id)) };
+	background-image: { templ.SafeCSSProperty(fmt.Sprintf("linear-gradient(rgba(0, 0, 0, var(--opacity)), rgba(0, 0, 0, var(--opacity))), url(\"%s/thumbnails/%d.webp\")", cfg.MediaAddress, id)) };
 }
 
 func formatCount(n int64, word string, pluralize bool) string {
@@ -207,7 +207,7 @@ templ FollowUserList(users *proto.FollowUsers, id int64, t string, page int) {
 							<template x-if="image_found">
 								<img
 									id="avatar_preview"
-									src={ fmt.Sprintf("http://localhost:9000/avatars/%d.webp", user.UserId) }
+									src={ fmt.Sprintf("%s/avatars/%d.webp", cfg.MediaAddress, user.UserId) }
 									@error="image_found = false"
 								/>
 							</template>

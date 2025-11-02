@@ -111,9 +111,9 @@ templ SettingsProfile(user *proto.User) {
 		document.addEventListener('alpine:init', () => {
 			Alpine.store('avatar', {
 				image_found: true,
-				image_url: "http://localhost:9000/avatars/{{ user.Id }}.webp",
+				image_url: "{{ cfg.MediaAddress }}/avatars/{{ user.Id }}.webp",
 				refresh() {
-					this.image_url = `http://localhost:9000/avatars/{{ user.Id }}.webp?ts=${Date.now()}`
+					this.image_url = `{{ cfg.MediaAddress }}/avatars/{{ user.Id }}.webp?ts=${Date.now()}`
             		this.image_found = true
 				}
 			})

@@ -11,6 +11,7 @@ Dependencies:
 - Docker (Compose)
 - Minio (Recommended)
 - Golang
+- TensorFlow
 - [ProtoBuf](https://protobuf.dev/installation/)
 - [libvips](https://www.libvips.org/install.html)
 
@@ -34,8 +35,10 @@ go install github.com/minio/mc@latest
 # Protobuf/gRPC plugins
 go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
 go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
-# vipsgen
-go install github.com/cshum/vipsgen/cmd/vipsgen@latest
+# Templ (Templating language)
+go install github.com/a-h/templ/cmd/templ@latest
+# Tailwind CSS (CSS Framework)
+npm install tailwindcss @tailwindcss/cli
 ```
 
 ### S3 Setup
@@ -68,3 +71,11 @@ Copy `build/.env.example` to `.env` and update the values.
 If you have an nvidia gpu, set `TRANSCODE_NVIDIA=true` to make processing videos faster
 
 After that, you can start all needed tools by running `devman`
+
+### Issues
+
+There may be a problem finding tensorflow, to fix this, add the following to `.env`
+```
+CGO_CFLAGS="-I/usr/include/tensorflow"
+CGO_LDFLAGS="-ltensorflow"
+```

@@ -32,6 +32,7 @@ var ctx = context.Background()
 
 func Add(app *fiber.App, dependencies Dependencies) {
 	deps = dependencies
+	frontend.Init(deps.Config)
 	app.Get("/", root)
 
 	app.Get("/recommendations", getRecommendations)

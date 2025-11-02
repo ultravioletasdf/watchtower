@@ -138,7 +138,7 @@ templ Avatar(userId int64, class string) {
 			<template x-if="image_found">
 				<img
 					id="avatar_preview"
-					src={ fmt.Sprintf("http://localhost:9000/avatars/%d.webp", userId) }
+					src={ fmt.Sprintf("%s/avatars/%d.webp", cfg.MediaAddress, userId) }
 					@error="image_found = false"
 				/>
 			</template>

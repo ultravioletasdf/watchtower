@@ -3,7 +3,14 @@ package frontend
 import (
 	"fmt"
 	"time"
+	"videoapp/internal/utils"
 )
+
+var cfg utils.Config
+
+func Init(c utils.Config) {
+	cfg = c
+}
 
 templ Base() {
 	<!DOCTYPE html>

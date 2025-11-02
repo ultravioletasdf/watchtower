@@ -167,10 +167,10 @@ templ VideoStatusPoller(video *proto.GetVideoResponse) {
 				This video was flagged for nudity
 			</div>
 		} else if video.Stage == proto.Stage_Processed {
-			<media-player autoplay src={ fmt.Sprintf("http://localhost:4000/videos/%d/master.m3u8", video.UploadId) }>
+			<media-player autoplay src={ fmt.Sprintf("%s/videos/%d/master.m3u8", cfg.CdnAddress, video.UploadId) }>
 				<media-provider></media-provider>
 				<media-video-layout
-					thumbnails={ fmt.Sprintf("http://localhost:4000/videos/%d/thumbnails.vtt?payload=%s&sig=%s",
+					thumbnails={ fmt.Sprintf("%s/videos/%d/thumbnails.vtt?payload=%s&sig=%s", cfg.CdnAddress,
       video.UploadId, video.AuthorizationPayload, video.AuthorizationSignature) }
 				></media-video-layout>
 			</media-player>
@@ -270,7 +270,13 @@ templ EditVideo(user *proto.User, video *proto.GetVideoResponse) {
 				</fieldset>
 				<fieldset class="fieldset" x-data>
 					<legend class="fieldset-legend">Thumbnail</legend>
-					<label id="thumbnailLabel" for="thumbnailInput" class=" aspect-video transition bg-base-100 hover:bg-base-10p flex items-center justify-center rounded border border-input bg-center bg-cover opacity-100" :class="$store.thumbnail.state === 'uploaded' ? 'border-none! hover:opacity-70' : ''" x-bind:style="$store.thumbnail.state === 'uploaded' ?`background-image: url('http://localhost:9000/thumbnails/${$store.thumbnail.id}.webp')` : ''">
+					<label
+						id="thumbnailLabel"
+						for="thumbnailInput"
+						class="aspect-video transition bg-base-100 hover:bg-base-10p flex items-center justify-center rounded border border-input bg-center bg-cover opacity-100"
+						:class="$store.thumbnail.state === 'uploaded' ? 'border-none! hover:opacity-70' : ''"
+						x-bind:style={ fmt.Sprintf("$store.thumbnail.state === 'uploaded' ?`background-image: url('%s/thumbnails/${$store.thumbnail.id}.webp')` : ''", cfg.MediaAddress) }
+					>
 						@icons.ImagePlus(icons.IconProps{Class: "size-6", Attributes: templ.Attributes{"x-show": "$store.thumbnail.state === 'not_uploaded'"}})
 						@icons.LoaderCircle(icons.IconProps{Class: "size-6 animate-spin", Attributes: templ.Attributes{"x-show": "$store.thumbnail.state === 'uploading'"}})
 						@icons.Pencil(icons.IconProps{Class: "size-6", Attributes: templ.Attributes{"x-show": "$store.thumbnail.state === 'uploaded'"}})

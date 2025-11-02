@@ -1,20 +1,19 @@
 services:
-  rabbitmq:
-    image: rabbitmq:management
-    container_name: rabbitmq
-    environment:
-      - RABBITMQ_LOGS=warning
-      - RABBITMQ_DEFAULT_USER=dev
-      - RABBITMQ_DEFAULT_PASS=dev
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-  postgres:
-    image: postgres
-    environment:
-      POSTGRES_PASSWORD: dev
-    volumes:
-      - ./tmp/postgres-data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
-
+    rabbitmq:
+        image: rabbitmq:management
+        container_name: rabbitmq
+        environment:
+            - RABBITMQ_LOGS=warning
+            - RABBITMQ_DEFAULT_USER=dev
+            - RABBITMQ_DEFAULT_PASS=dev
+        ports:
+            - "5672:5672"
+            - "15672:15672"
+    postgres:
+        image: postgres
+        environment:
+            POSTGRES_PASSWORD: dev
+        volumes:
+            - ./tmp/postgres-data:/var/lib/postgresql
+        ports:
+            - "5432:5432"
