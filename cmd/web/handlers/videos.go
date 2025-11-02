@@ -109,7 +109,7 @@ func getRecommendations(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(500).SendString(err.Error())
 	}
-	return Render(c, frontend.VideoList(videos.Videos, page+1))
+	return Render(c, frontend.VideoList(videos.Videos, "recommendations", page+1))
 }
 
 func editVideo(c *fiber.Ctx) error {

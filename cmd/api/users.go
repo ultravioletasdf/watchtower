@@ -239,13 +239,16 @@ func (s *userServer) UpdateProfile(ctx context.Context, req *proto.UpdateProfile
 }
 
 func (s *userServer) ListRecommendations(ctx context.Context, req *proto.ListRecommendationsRequest) (*proto.ListRecommendationsResponse, error) {
-	user, err := executor.GetUserFromSession(ctx, req.Session)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, common.ErrUnauthorized
-	} else if err != nil {
-		return nil, common.ErrInternal(err)
+	var uid int64
+	if req.Session != "" {
+		user, err := executor.GetUserFromSession(ctx, req.Session)
+		if err == nil {
+			uid = user.ID
+		} else {
+			fmt.Println("Failed to get user", err)
+		}
 	}
-	videosIdStrings, err := gorse.GetRecommendOffSet(ctx, fmt.Sprint(user.ID), "", 10, int(req.Page)*10)
+	videosIdStrings, err := gorse.GetRecommendOffSet(ctx, fmt.Sprint(uid), "", 10, int(req.Page)*10)
 	if err != nil {
 		return nil, common.ErrInternal(err)
 	}
@@ -259,7 +262,7 @@ func (s *userServer) ListRecommendations(ctx context.Context, req *proto.ListRec
 	}
 	response := make([]*proto.Video, len(videos))
 	for i, v := range videos {
-		response[i] = &proto.Video{UserId: v.UserID, Id: v.ID, Title: v.Title, Visibility: proto.Visibility(v.Visibility), ThumbnailId: v.ThumbnailID, Stage: proto.Stage(v.Stage), CreatedAt: timestamppb.New(v.CreatedAt.Time), Username: user.Username}
+		response[i] = &proto.Video{UserId: v.UserID, Id: v.ID, Title: v.Title, Visibility: proto.Visibility(v.Visibility), ThumbnailId: v.ThumbnailID, Stage: proto.Stage(v.Stage), CreatedAt: timestamppb.New(v.CreatedAt.Time), Username: v.Username.String}
 	}
 
 	return &proto.ListRecommendationsResponse{Videos: response}, nil

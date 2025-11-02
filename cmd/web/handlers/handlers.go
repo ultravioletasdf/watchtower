@@ -2,16 +2,12 @@ package handlers
 
 import (
 	"context"
-	"errors"
-	"fmt"
 
 	"github.com/a-h/templ"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/etag"
-	"google.golang.org/grpc/status"
 
 	"videoapp/cmd/web/frontend"
-	common "videoapp/internal/errors"
 	"videoapp/internal/generated/proto"
 	"videoapp/internal/utils"
 )
@@ -81,20 +77,7 @@ func Add(app *fiber.App, dependencies Dependencies) {
 	app.Static("/assets", "./cmd/web/assets", fiber.Static{Compress: true})
 }
 func root(c *fiber.Ctx) error {
-	if session := c.Cookies("session"); session != "" {
-		user, err := deps.Clients.Sessions.GetUser(c.Context(), &proto.Session{Token: session})
-		if err == nil {
-			fmt.Println(user)
-			return Render(c, frontend.Home(user))
-		}
-		status, ok := status.FromError(err)
-		if ok && errors.Is(status.Err(), common.ErrSessionNotFound) || errors.Is(status.Err(), common.ErrSessionWrongSize) {
-			c.ClearCookie("session")
-		} else {
-			fmt.Printf("failed to get user: %v\n", err)
-		}
-	}
-	return c.Redirect("/sign/in")
+	return Render(c, frontend.Home(getUser(c)))
 }
 func Render(c *fiber.Ctx, component templ.Component) error {
 	c.Set("Content-Type", "text/html")

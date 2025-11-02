@@ -9,17 +9,17 @@ templ Following(user *proto.User, videos []*proto.Video) {
 	@AppLayout(user) {
 		Following
 		<div class="gap-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 mt-1">
-			@VideoList(videos, 1)
+			@VideoList(videos, "following", 1)
 		</div>
 	}
 }
 
-templ VideoList(videos []*proto.Video, page int) {
+templ VideoList(videos []*proto.Video, endpoint string, page int) {
 	for i, v := range videos {
 		<div
 			class="flex flex-col gap-1"
 			if len(videos) - 1 == i {
-				hx-get={ fmt.Sprintf("/following/?page=%d", page) }
+				hx-get={ fmt.Sprintf("/%s/?page=%d", endpoint, page) }
 				hx-trigger="intersect once"
 				hx-swap="afterend"
 			}
