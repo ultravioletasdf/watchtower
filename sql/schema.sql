@@ -6,7 +6,6 @@ users (
     display_name varchar(32),
     description varchar(200),
     password bytea NOT NULL,
-    created_at timestamptz NOT NULL,
     flags int NOT NULL DEFAULT 0,
     verify_code int NOT NULL DEFAULT 0,
     verify_expire_at timestamptz NOT NULL
@@ -25,8 +24,7 @@ sessions (
 CREATE TABLE
 uploads (
     id bigint PRIMARY KEY,
-    user_id bigint NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    created_at timestamptz NOT NULL
+    user_id bigint NOT NULL REFERENCES users (id) ON DELETE CASCADE
 );
 
 CREATE TABLE
@@ -38,8 +36,7 @@ videos (
     title varchar(100) NOT NULL,
     description varchar(1000) NOT NULL,
     visibility int NOT NULL DEFAULT 0,
-    stage int NOT NULL,
-    created_at timestamptz NOT NULL DEFAULT NOW()
+    stage int NOT NULL
 );
 
 CREATE TABLE follows (

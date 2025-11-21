@@ -143,7 +143,7 @@ templ ProfileVideoList(videos []*proto.GetUserVideosResponseVideo, viewingUser *
 							<div class="max-w-full overflow-ellipsis overflow-hidden text-nowrap">{ v.Title }</div>
 						</div>
 						<div class="text-sm text-base-content/70">
-							{ formatDate(v.CreatedAt) }
+							{ FormatSnowflakeDate(v.Id) }
 						</div>
 					}
 					<div>

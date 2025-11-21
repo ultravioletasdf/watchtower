@@ -64,11 +64,10 @@ message Video {
   int64 id = 1;
   string title = 2;
   Visibility visibility = 3;
-  google.protobuf.Timestamp created_at = 4;
-  int64 thumbnail_id = 5;
-  Stage stage = 6;
-  int64 user_id = 7;
-  string username = 8;
+  int64 thumbnail_id = 4;
+  Stage stage = 5;
+  int64 user_id = 6;
+  string username = 7;
 }
 message CreateRequest {
   string email = 1;

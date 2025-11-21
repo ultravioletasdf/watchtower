@@ -129,7 +129,6 @@ func (s *userServer) Get(ctx context.Context, req *proto.UsersGetRequest) (*prot
 			Id:             user.ID,
 			Email:          user.Email,
 			Username:       user.Username,
-			CreatedAt:      timestamppb.New(user.CreatedAt.Time),
 			Flags:          uint64(user.Flags),
 			FollowerCount:  user.FollowerCount,
 			FollowingCount: user.FollowingCount,
@@ -156,7 +155,6 @@ func (s *userServer) GetById(ctx context.Context, req *proto.UsersGetByIdRequest
 			Id:             user.ID,
 			Email:          user.Email,
 			Username:       user.Username,
-			CreatedAt:      timestamppb.New(user.CreatedAt.Time),
 			Flags:          uint64(user.Flags),
 			FollowerCount:  user.FollowerCount,
 			FollowingCount: user.FollowingCount,
@@ -173,7 +171,7 @@ func (s *userServer) GetFollowingVideos(ctx context.Context, req *proto.GetFollo
 
 	result := make([]*proto.Video, len(videos))
 	for i, v := range videos {
-		result[i] = &proto.Video{Id: v.ID, Title: v.Title, Visibility: proto.Visibility(v.Visibility), CreatedAt: timestamppb.New(v.CreatedAt.Time), ThumbnailId: v.ThumbnailID, Stage: proto.Stage(v.Stage), UserId: v.UserID, Username: v.Username.String}
+		result[i] = &proto.Video{Id: v.ID, Title: v.Title, Visibility: proto.Visibility(v.Visibility), ThumbnailId: v.ThumbnailID, Stage: proto.Stage(v.Stage), UserId: v.UserID, Username: v.Username.String}
 	}
 	return &proto.GetFollowingVideosResponse{Videos: result}, nil
 }
@@ -267,7 +265,7 @@ func (s *userServer) ListRecommendations(ctx context.Context, req *proto.ListRec
 	}
 	response := make([]*proto.Video, len(videos))
 	for i, v := range videos {
-		response[i] = &proto.Video{UserId: v.UserID, Id: v.ID, Title: v.Title, Visibility: proto.Visibility(v.Visibility), ThumbnailId: v.ThumbnailID, Stage: proto.Stage(v.Stage), CreatedAt: timestamppb.New(v.CreatedAt.Time), Username: v.Username.String}
+		response[i] = &proto.Video{UserId: v.UserID, Id: v.ID, Title: v.Title, Visibility: proto.Visibility(v.Visibility), ThumbnailId: v.ThumbnailID, Stage: proto.Stage(v.Stage)}
 	}
 
 	return &proto.ListRecommendationsResponse{Videos: response}, nil
