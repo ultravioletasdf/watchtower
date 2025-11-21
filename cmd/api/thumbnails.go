@@ -37,7 +37,7 @@ func (s *thumbnailsServer) CreateUpload(ctx context.Context, req *proto.CreateUp
 	policy.SetContentTypeStartsWith("image")
 	policy.SetExpires(time.Now().Add(15 * time.Minute))
 
-	policy.SetContentLengthRange(1024, 1024*1024*2)
+	policy.SetContentLengthRange(1024, 1024*1024*10) // Min 1KB, Max 10MB
 
 	u, fd, err := s3.PresignedPostPolicy(ctx, policy)
 	if err != nil {

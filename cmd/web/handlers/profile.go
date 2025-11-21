@@ -42,12 +42,11 @@ func profile(c *fiber.Ctx) error {
 	return c.Redirect("/sign/in")
 }
 func profileFromId(c *fiber.Ctx) error {
-	userId := c.Params("id")
-	userIdInt, err := strconv.ParseInt(userId, 10, 0)
+	id, err := c.ParamsInt("id")
 	if err != nil {
 		return c.SendStatus(400)
 	}
-	user, err := deps.Clients.Users.GetById(c.Context(), &proto.UsersGetByIdRequest{Id: userIdInt, Session: c.Cookies("session")})
+	user, err := deps.Clients.Users.GetById(c.Context(), &proto.UsersGetByIdRequest{Id: int64(id), Session: c.Cookies("session")})
 	if errors.Is(err, common.ErrUserNotFound) {
 		return c.SendStatus(404)
 	} else if err != nil {
@@ -77,25 +76,20 @@ func getStages(c *fiber.Ctx) error {
 
 // Handles both followers and follows
 func getFollowsModal(c *fiber.Ctx) error {
-	idString := c.Params("id")
-	id, err := strconv.ParseInt(idString, 10, 0)
+	id, err := c.ParamsInt("id")
 	if err != nil {
 		return c.SendString("Invalid id")
 	}
 
-	pageString := c.Query("page", "0")
-	page, err := strconv.Atoi(pageString)
-	if err != nil {
-		return c.SendString("Invalid page")
-	}
+	page := c.QueryInt("page")
 
 	var result *proto.FollowUsers
 	reqType := c.Params("type")
 	switch reqType {
 	case "followers":
-		result, err = deps.Clients.Users.GetFollowers(c.Context(), &proto.GetFollowsRequest{UserId: id, Page: int32(page)})
+		result, err = deps.Clients.Users.GetFollowers(c.Context(), &proto.GetFollowsRequest{UserId: int64(id), Page: int32(page)})
 	case "follows":
-		result, err = deps.Clients.Users.GetFollowing(c.Context(), &proto.GetFollowsRequest{UserId: id, Page: int32(page)})
+		result, err = deps.Clients.Users.GetFollowing(c.Context(), &proto.GetFollowsRequest{UserId: int64(id), Page: int32(page)})
 	default:
 		return c.Next()
 	}
@@ -103,9 +97,6 @@ func getFollowsModal(c *fiber.Ctx) error {
 	if err != nil {
 		return c.SendString("There was an error: " + status.Convert(err).Message())
 	}
-	// Use to test infinite scrolling
-	// for range 10 {
-	// 	result.Users = append(result.Users, &proto.FollowUser{UserId: 1, CreatedAt: timestamppb.Now(), Username: "demo user"})
-	// }
-	return Render(c, frontend.FollowUserList(result, id, reqType, page+1))
+
+	return Render(c, frontend.FollowUserList(result, int64(id), reqType, page+1))
 }

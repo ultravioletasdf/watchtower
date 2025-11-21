@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"strconv"
-
 	"github.com/gofiber/fiber/v2"
 
 	"videoapp/cmd/web/frontend"
@@ -15,7 +13,7 @@ func following(c *fiber.Ctx) error {
 		return c.Redirect("/sign/in")
 	}
 
-	page, _ := strconv.Atoi(c.Query("page"))
+	page := c.QueryInt("page")
 
 	videos, err := deps.Clients.Users.GetFollowingVideos(ctx, &proto.GetFollowingVideosRequest{UserId: u.Id, Page: int32(page)})
 	if err != nil {

@@ -2,7 +2,6 @@ package frontend
 
 import (
 	"fmt"
-	"github.com/dimmerz92/go-lucide-icons/pkg/templ/icons"
 	"videoapp/internal/generated/proto"
 )
 
@@ -83,22 +82,7 @@ templ AfterUpload(user *proto.User, uploadId string) {
 					<option>Private</option>
 				</select>
 			</fieldset>
-			<fieldset class="fieldset" x-data>
-				<legend class="fieldset-legend">Thumbnail</legend>
-				<label
-					id="thumbnailLabel"
-					for="thumbnailInput"
-					class="aspect-video transition bg-base-100 hover:bg-base-10p flex items-center justify-center rounded border border-input bg-center bg-cover opacity-100"
-					:class="$store.thumbnail.state === 'uploaded' ? 'border-none! hover:opacity-70' : ''"
-					x-bind:style={ fmt.Sprintf("$store.thumbnail.state === 'uploaded' ?`background-image: url('%s/thumbnails/${$store.thumbnail.id}.webp')` : ''", cfg.MediaAddress) }
-				>
-					@icons.ImagePlus(icons.IconProps{Class: "size-6", Attributes: templ.Attributes{"x-show": "$store.thumbnail.state === 'not_uploaded'"}})
-					@icons.LoaderCircle(icons.IconProps{Class: "size-6 animate-spin", Attributes: templ.Attributes{"x-show": "$store.thumbnail.state === 'uploading'"}})
-					@icons.Pencil(icons.IconProps{Class: "size-6", Attributes: templ.Attributes{"x-show": "$store.thumbnail.state === 'uploaded'"}})
-				</label>
-				<input type="file" id="thumbnailInput" accept="image/*" class="hidden"/>
-				<input type="text" name="thumbnailId" id="thumbnailId" class="hidden" required x-model="$store.thumbnail.id"/>
-			</fieldset>
+			@ThumbnailInput()
 			<button class="btn btn-primary btn-block mt-4">Publish</button>
 			<div id="error" class="text-error text-sm text-center"></div>
 		</form>
@@ -133,12 +117,18 @@ script ThumbnailUpload() {
 		  formData.append(key, form_data[key])
 		}
 		formData.append('file', file)
-		await uploadToS3(url, formData)
+		try {
+		    await uploadToS3(url, formData)
+		} catch (err) {
+		    Alpine.store("thumbnail").state = "errored"
+		    console.log("Failed to upload", err)
+			return
+		}
 		res = await fetch(`/upload/thumbnail/${id}/process`, {
 		  method: 'POST'
 		})
 		if (!res.ok) {
-		    alert("Failed to upload")
+		    Alpine.store("thumbnail").state = "errored"
 			return
 		}
 		thumbnailId.value = id
@@ -159,10 +149,11 @@ script ThumbnailUpload() {
                 xhr.onload = () => {
                     if (xhr.status === 204) {
                         console.log('Upload successful');
+                        res()
                     } else {
                         console.error('Upload failed', xhr.responseText);
+                        rej(new Error("Upload failed: " + xhr.status))
                     }
-                    res()
                 }
 
                 xhr.onerror = (e) => {

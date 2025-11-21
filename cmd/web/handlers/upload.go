@@ -51,15 +51,11 @@ func uploadThumbnail(c *fiber.Ctx) error {
 	return c.JSON(map[string]any{"id": strconv.FormatInt(upload.Id, 10), "form_data": upload.FormData, "url": upload.Url})
 }
 func processThumbnail(c *fiber.Ctx) error {
-	id := c.Params("id")
-	if id == "" {
-		return c.SendStatus(400)
-	}
-	idInt, err := strconv.ParseInt(id, 10, 0)
+	id, err := c.ParamsInt("id")
 	if err != nil {
-		return c.SendStatus(400)
+		return c.Status(400).SendString("Invalid id")
 	}
-	_, err = deps.Clients.Thumbnails.Process(ctx, &proto.ThumbnailsProcessRequest{Id: idInt, Session: c.Cookies("session")})
+	_, err = deps.Clients.Thumbnails.Process(ctx, &proto.ThumbnailsProcessRequest{Id: int64(id), Session: c.Cookies("session")})
 	if shouldReturn := unwrapGrpcError(c, err, 400); shouldReturn {
 		return nil
 	}
@@ -125,15 +121,15 @@ func publishVideo(c *fiber.Ctx) error {
 	case "Unlisted":
 		visibility = proto.Visibility_Unlisted
 	}
-	uploadId, err := strconv.ParseInt(c.Params("id"), 10, 0)
+	uploadId, err := c.ParamsInt("id")
 	if err != nil {
 		return c.SendString("Invalid upload id, try uploading again from scratch")
 	}
-	thumbnailId, err := strconv.ParseInt(c.FormValue("thumbnailId"), 10, 0)
+	thumbnailId, err := strconv.ParseInt(c.FormValue("thumbnail_id"), 10, 0)
 	if err != nil {
 		return c.SendString("Invalid thumbnail id, try uploading a new thumbnail")
 	}
-	v, err := deps.Clients.Videos.Create(ctx, &proto.VideosCreateRequest{Session: c.Cookies("session"), UploadId: uploadId, ThumbnailId: thumbnailId, Title: c.FormValue("title"), Description: c.FormValue("description"), Visibility: visibility})
+	v, err := deps.Clients.Videos.Create(ctx, &proto.VideosCreateRequest{Session: c.Cookies("session"), UploadId: int64(uploadId), ThumbnailId: thumbnailId, Title: c.FormValue("title"), Description: c.FormValue("description"), Visibility: visibility})
 	if shouldReturn := unwrapGrpcError(c, err, 200); shouldReturn {
 		return nil
 	}

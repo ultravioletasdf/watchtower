@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -14,11 +15,11 @@ import (
 )
 
 func viewVideo(c *fiber.Ctx) error {
-	idInt, err := strconv.ParseInt(c.Params("id"), 10, 0)
+	id, err := c.ParamsInt("id")
 	if err != nil {
 		return c.SendString("Invalid video id")
 	}
-	v, err := deps.Clients.Videos.Get(ctx, &proto.GetVideoRequest{Session: c.Cookies("session"), Id: idInt})
+	v, err := deps.Clients.Videos.Get(ctx, &proto.GetVideoRequest{Session: c.Cookies("session"), Id: int64(id)})
 	if err != nil {
 		status := status.Convert(err)
 		if status.Code() == codes.PermissionDenied || status.Code() == codes.Unauthenticated {
@@ -29,22 +30,22 @@ func viewVideo(c *fiber.Ctx) error {
 	return Render(c, frontend.ViewVideo(getUser(c), v))
 }
 func videoStatus(c *fiber.Ctx) error {
-	id, err := strconv.ParseInt(c.Params("id"), 10, 0)
+	id, err := c.ParamsInt("id")
 	if err != nil {
 		return c.SendString("Invalid id")
 	}
-	stage, err := deps.Clients.Videos.GetStage(ctx, &proto.VideosGetStageRequest{Session: c.Params("session"), Id: id})
+	stage, err := deps.Clients.Videos.GetStage(ctx, &proto.VideosGetStageRequest{Session: c.Params("session"), Id: int64(id)})
 	if shouldReturn := unwrapGrpcError(c, err, 200); shouldReturn {
 		return nil
 	}
-	return Render(c, frontend.VideoStatusPoller(&proto.GetVideoResponse{Id: id, UploadId: stage.UploadId, Stage: stage.Stage, AuthorizationPayload: stage.AuthorizationPayload, AuthorizationSignature: stage.AuthorizationSignature}))
+	return Render(c, frontend.VideoStatusPoller(&proto.GetVideoResponse{Id: int64(id), UploadId: stage.UploadId, Stage: stage.Stage, AuthorizationPayload: stage.AuthorizationPayload, AuthorizationSignature: stage.AuthorizationSignature}))
 }
 func extraUserInfo(c *fiber.Ctx) error {
-	id, err := strconv.ParseInt(c.Params("id"), 10, 0)
+	id, err := c.ParamsInt("id")
 	if err != nil {
 		return c.SendStatus(400)
 	}
-	user, err := deps.Clients.Users.GetById(c.Context(), &proto.UsersGetByIdRequest{Session: c.Cookies("session"), Id: id})
+	user, err := deps.Clients.Users.GetById(c.Context(), &proto.UsersGetByIdRequest{Session: c.Cookies("session"), Id: int64(id)})
 	if errors.Is(err, sql.ErrNoRows) {
 		return c.SendString("User not found")
 	} else if err != nil {
@@ -54,36 +55,27 @@ func extraUserInfo(c *fiber.Ctx) error {
 }
 
 func createComment(c *fiber.Ctx) error {
-	id := c.Params("id")
-	idInt, err := strconv.ParseInt(id, 10, 0)
+	id, err := c.ParamsInt("id")
 	if err != nil {
-		return c.SendStatus(400)
+		return c.Status(400).SendString("Invalid id")
 	}
 
 	comment := c.FormValue("comment")
 
-	referenceId := c.Query("reference_id")
-	var referenceIdInt int64
-	if referenceId != "" {
-		referenceIdInt, err = strconv.ParseInt(referenceId, 10, 0)
-		if err != nil {
-			return c.SendStatus(400)
-		}
-	}
+	referenceId := c.QueryInt("reference_id")
 
-	if referenceIdInt != 0 {
+	if referenceId != 0 {
 		// When there is a ReferenceId, tell HTMX to add the comment to its replies instead of the main video comments
-		c.Set("HX-Retarget", "#replies_"+referenceId)
+		c.Set("HX-Retarget", fmt.Sprintf("#replies_%d", referenceId))
 	}
-	cmnt, err := deps.Clients.Videos.CreateComment(c.Context(), &proto.CreateCommentRequest{Session: c.Cookies("session"), VideoId: idInt, Content: comment, ReferenceId: referenceIdInt})
+	cmnt, err := deps.Clients.Videos.CreateComment(c.Context(), &proto.CreateCommentRequest{Session: c.Cookies("session"), VideoId: int64(id), Content: comment, ReferenceId: int64(referenceId)})
 	if err != nil {
 		return c.Status(500).SendString(err.Error())
 	}
 	return Render(c, frontend.Comment(cmnt, cmnt.UserId))
 }
 func listComments(c *fiber.Ctx) error {
-	videoId := c.Params("id")
-	videoIdInt, err := strconv.ParseInt(videoId, 10, 0)
+	videoId, err := c.ParamsInt("id")
 	if err != nil {
 		return c.SendStatus(400)
 	}
@@ -92,7 +84,7 @@ func listComments(c *fiber.Ctx) error {
 	referenceId := c.QueryInt("reference_id", 0)
 	sortOrder := c.QueryInt("sort_order", 1)
 
-	comments, err := deps.Clients.Videos.ListComments(c.Context(), &proto.ListCommentsRequest{VideoId: videoIdInt, Session: c.Cookies("session"), Page: int32(page), ReferenceId: int64(referenceId), SortOrder: proto.SortOrder(sortOrder)})
+	comments, err := deps.Clients.Videos.ListComments(c.Context(), &proto.ListCommentsRequest{VideoId: int64(videoId), Session: c.Cookies("session"), Page: int32(page), ReferenceId: int64(referenceId), SortOrder: proto.SortOrder(sortOrder)})
 	if err != nil {
 		return c.Status(500).SendString(status.Convert(err).Message())
 	}
@@ -100,7 +92,7 @@ func listComments(c *fiber.Ctx) error {
 	if u := getUser(c); u != nil {
 		uid = u.Id
 	}
-	return Render(c, frontend.CommentList(comments, videoIdInt, int32(page), uid, int32(sortOrder)))
+	return Render(c, frontend.CommentList(comments, int64(videoId), int32(page), uid, int32(sortOrder)))
 }
 
 func getRecommendations(c *fiber.Ctx) error {
@@ -172,5 +164,4 @@ func saveVideoChanges(c *fiber.Ctx) error {
 		return c.Status(500).SendString(err.Error())
 	}
 	return Render(c, frontend.SoftSuccess("Saved"))
-
 }
